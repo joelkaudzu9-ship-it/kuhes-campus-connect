@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}{{ profile_user.get_full_name() }} - Profile - KUHES Campus Connect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Back Button -->
+    <div class="mb-4">
+        <a href="javascript:history.back()" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i> Back
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Left Column: Profile Info -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <!-- Profile Picture -->
+                    <div class="mb-4">
+                        <div class="profile-avatar mx-auto">
+                            <i class="fas fa-user-md fa-4x text-primary"></i>
+                        </div>
+                    </div>
+
+                    <!-- User Info -->
+                    <h3 class="fw-bold mb-1">{{ profile_user.get_full_name() }}</h3>
+                    <p class="text-muted mb-3">@{{ profile_user.username }}</p>
+
+                    <!-- Badges -->
+                    <div class="mb-4">
+                        <span class="badge bg-primary mb-2">{{ profile_user.role|title }}</span>
+                        <span class="badge bg-success">{{ profile_user.faculty|title }}</span>
+                    </div>
+
+                    <!-- Profile Details -->
+                    <div class="text-start">
+                        <div class="profile-detail mb-3">
+                            <h6 class="text-muted mb-1"><i class="fas fa-envelope me-2"></i>Email</h6>
+                            <p class="mb-0">{{ profile_user.email }}</p>
+                        </div>
+
+                        <div class="profile-detail mb-3">
+                            <h6 class="text-muted mb-1"><i class="fas fa-graduation-cap me-2"></i>Faculty</h6>
+                            <p class="mb-0">{{ profile_user.faculty|title }}</p>
+                        </div>
+
+                        <div class="profile-detail mb-3">
+                            <h6 class="text-muted mb-1"><i class="fas fa-book me-2"></i>Program</h6>
+                            <p class="mb-0">{{ profile_user.program }}</p>
+                        </div>
+
+                        <div class="profile-detail mb-3">
+                            <h6 class="text-muted mb-1"><i class="fas fa-calendar me-2"></i>Year</h6>
+                            <p class="mb-0">Year {{ profile_user.year }}</p>
+                        </div>
+
+                        <div class="profile-detail">
+                            <h6 class="text-muted mb-1"><i class="fas fa-calendar-alt me-2"></i>Member Since</h6>
+                            <p class="mb-0">{{ profile_user.created_at.strftime('%B %Y') }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="row mt-4 pt-4 border-top">
+                        <div class="col-6 text-center">
+                            <h4 class="fw-bold text-primary">{{ posts|length }}</h4>
+                            <p class="small text-muted mb-0">Posts</p>
+                        </div>
+                        <div class="col-6 text-center">
+                            <h4 class="fw-bold text-success">{{ profile_user.comments|length }}</h4>
+                            <p class="small text-muted mb-0">Comments</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: User's Posts -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i> Recent Posts by {{ profile_user.username }}</h5>
+                </div>
+                <div class="card-body">
+                    {% if posts %}
+                        {% for post in posts %}
+                        <div class="post-preview mb-4 pb-4 border-bottom">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h5 class="fw-bold mb-1">
+                                        <a href="{{ url_for('main.view_post', post_id=post.id) }}" class="text-decoration-none">
+                                            {{ post.title }}
+                                        </a>
+                                    </h5>
+                                    <p class="text-muted small mb-0">
+                                        <i class="fas fa-calendar me-1"></i> {{ post.created_at.strftime('%B %d, %Y') }}
+                                        <span class="badge bg-secondary ms-2">{{ post.category|title }}</span>
+                                    </p>
+                                </div>
+                                <div class="text-muted small">
+                                    {{ post.comments|length }} <i class="fas fa-comment ms-1"></i>
+                                </div>
+                            </div>
+                            <p class="mb-0">{{ post.content[:150] }}{% if post.content|length > 150 %}...{% endif %}</p>
+                            <div class="mt-2">
+                                <a href="{{ url_for('main.view_post', post_id=post.id) }}" class="btn btn-sm btn-outline-primary">
+                                    Read More <i class="fas fa-arrow-right ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-newspaper fa-4x text-muted mb-3"></i>
+                            <h5 class="text-muted">No posts yet</h5>
+                            <p class="text-muted">{{ profile_user.username }} hasn't created any posts yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(135deg, #0056b3, #28a745);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        margin: 0 auto;
+        border: 5px solid white;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .profile-detail {
+        padding: 8px 0;
+    }
+
+    .profile-detail h6 {
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .profile-detail p {
+        font-size: 1rem;
+        font-weight: 500;
+    }
+
+    .post-preview {
+        transition: all 0.3s ease;
+    }
+
+    .post-preview:hover {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-left: -15px;
+        margin-right: -15px;
+    }
+</style>
+{% endblock %}

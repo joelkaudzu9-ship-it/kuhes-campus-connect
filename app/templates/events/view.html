@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}{{ event.title }} - KUHES Campus Connect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Back Button -->
+    <div class="mb-4">
+        <a href="{{ url_for('events.events_home') }}" class="btn btn-kuhes-outline">
+            <i class="fas fa-arrow-left me-2"></i> Back to Events
+        </a>
+    </div>
+
+    <div class="kuhes-card">
+        <div class="kuhes-card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">{{ event.title }}</h4>
+                {% if event.status == 'approved' %}
+                <span class="badge bg-success">
+                    <i class="fas fa-check-circle me-1"></i> Approved
+                </span>
+                {% elif event.status == 'pending' %}
+                <span class="badge bg-warning">
+                    <i class="fas fa-clock me-1"></i> Pending Approval
+                </span>
+                {% elif event.status == 'rejected' %}
+                <span class="badge bg-danger">
+                    <i class="fas fa-times-circle me-1"></i> Rejected
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="kuhes-card-body">
+            <!-- Event Info -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="text-center p-3 bg-kuhes-primary text-white rounded">
+                        <div class="display-6 fw-bold">{{ event.start_date.strftime('%d') }}</div>
+                        <div class="text-uppercase">{{ event.start_date.strftime('%b') }}</div>
+                        <div class="small">{{ event.start_date.strftime('%Y') }}</div>
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <div class="mb-3">
+                        <span class="badge-kuhes me-2">
+                            <i class="fas fa-tag me-1"></i> {{ event.event_type|title }}
+                        </span>
+                        <span class="badge-kuhes-outline me-2">
+                            <i class="fas fa-folder me-1"></i> {{ event.category|title }}
+                        </span>
+                    </div>
+
+                    <p class="mb-3">
+                        <i class="fas fa-map-marker-alt me-2 text-kuhes-primary"></i>
+                        <strong>Venue:</strong> {{ event.venue }}
+                    </p>
+
+                    <p class="mb-3">
+                        <i class="fas fa-clock me-2 text-kuhes-primary"></i>
+                        <strong>Time:</strong>
+                        {{ event.start_date.strftime('%I:%M %p') }}
+                        {% if event.end_date %}
+                        - {{ event.end_date.strftime('%I:%M %p') }}
+                        {% endif %}
+                    </p>
+
+                    <p class="mb-0">
+                        <i class="fas fa-user me-2 text-kuhes-primary"></i>
+                        <strong>Organizer:</strong> {{ event.organizer_name or event.organizer.username }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-4">
+                <h5 class="text-kuhes-primary mb-3">Event Description</h5>
+                <p style="white-space: pre-line;">{{ event.description }}</p>
+            </div>
+
+            <!-- Contact Info -->
+            {% if event.contact_email or event.contact_phone %}
+            <div class="mb-4">
+                <h5 class="text-kuhes-primary mb-3">Contact Information</h5>
+                <div class="row">
+                    {% if event.contact_email %}
+                    <div class="col-md-6">
+                        <p class="mb-2">
+                            <i class="fas fa-envelope me-2"></i>
+                            <strong>Email:</strong> {{ event.contact_email }}
+                        </p>
+                    </div>
+                    {% endif %}
+                    {% if event.contact_phone %}
+                    <div class="col-md-6">
+                        <p class="mb-0">
+                            <i class="fas fa-phone me-2"></i>
+                            <strong>Phone:</strong> {{ event.contact_phone }}
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Admin Info -->
+            {% if event.status == 'rejected' and event.rejection_reason %}
+            <div class="alert alert-danger">
+                <h5><i class="fas fa-times-circle me-2"></i> Rejection Reason</h5>
+                <p class="mb-0">{{ event.rejection_reason }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="kuhes-card-footer">
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">
+                    Created by {{ event.organizer.username }} on {{ event.created_at.strftime('%B %d, %Y') }}
+                </small>
+                {% if current_user.is_authenticated and (current_user.id == event.user_id or current_user.can_approve_events()) %}
+                <div class="btn-group">
+                    {% if current_user.can_approve_events() and event.status == 'pending' %}
+                    <button class="btn btn-success btn-sm" onclick="approveEvent({{ event.id }})">
+                        <i class="fas fa-check me-1"></i> Approve
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="rejectEvent({{ event.id }})">
+                        <i class="fas fa-times me-1"></i> Reject
+                    </button>
+                    {% endif %}
+                    {% if current_user.id == event.user_id or current_user.is_admin() %}
+                    <button class="btn btn-outline-danger btn-sm" onclick="deleteEvent({{ event.id }})">
+                        <i class="fas fa-trash me-1"></i> Delete
+                    </button>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function approveEvent(eventId) {
+        if (confirm('Approve this event?')) {
+            fetch(`/events/approve/${eventId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            });
+        }
+    }
+
+    function rejectEvent(eventId) {
+        const reason = prompt('Please provide a reason for rejection:');
+        if (reason) {
+            fetch(`/events/reject/${eventId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason: reason })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            });
+        }
+    }
+
+    function deleteEvent(eventId) {
+        if (confirm('Delete this event? This cannot be undone.')) {
+            fetch(`/events/delete/${eventId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '/events';
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            });
+        }
+    }
+</script>
+{% endblock %}

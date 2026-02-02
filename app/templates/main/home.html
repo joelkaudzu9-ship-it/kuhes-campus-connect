@@ -1,0 +1,773 @@
+{% extends "base.html" %}
+
+{% block title %}Home - KUHES Campus Connect{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="kuhes-hero rounded-3 mb-5" style="
+    background: linear-gradient(rgba(0, 86, 179, 0.9), rgba(0, 61, 122, 0.9)),
+                url('{{ url_for('static', filename='images/kuhes-campus.jpg') }}');
+    background-size: cover;
+    background-position: center;
+    padding: 100px 0;
+    position: relative;
+    overflow: hidden;">
+
+    <!-- Animated Background - FIXED -->
+    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+                background-image: url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%222%22 fill=%22white%22 opacity=%220.1%22/%3E%3C/svg%3E');
+                background-size: 50px 50px;
+                animation: float 20s linear infinite;
+                opacity: 0.3;
+                z-index: 1;"></div>
+
+    <div class="container position-relative" style="z-index: 2;">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <h1 class="display-4 fw-bold mb-3 text-white animate__animated animate__fadeInUp">
+                    Welcome to KUHES Campus Connect
+                </h1>
+                <p class="lead mb-4 text-white animate__animated animate__fadeInUp animate__delay-1s"
+                   style="opacity: 0.95;">
+                    Your digital gateway to campus life at Kamuzu University of Health Sciences.
+                    Connect, collaborate, and thrive in your academic journey.
+                </p>
+
+                <div class="d-flex flex-wrap gap-3 animate__animated animate__fadeInUp animate__delay-2s">
+                    {% if not current_user.is_authenticated %}
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg px-5 py-3 fw-bold">
+                        <i class="fas fa-user-plus me-2"></i> Join Our Community
+                    </a>
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-light btn-lg px-5 py-3 fw-bold">
+                        <i class="fas fa-sign-in-alt me-2"></i> Sign In
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('main.create_post') }}" class="btn btn-light btn-lg px-5 py-3 fw-bold">
+                        <i class="fas fa-plus-circle me-2"></i> Create Post
+                    </a>
+                    <a href="{{ url_for('events.create_event') }}" class="btn btn-outline-light btn-lg px-5 py-3 fw-bold">
+                        <i class="fas fa-calendar-plus me-2"></i> Create Event
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-lg-5 mt-5 mt-lg-0">
+                <div class="text-center">
+                    <!-- Animated KUHES Logo -->
+                    <div class="position-relative d-inline-block">
+                        <div class="position-relative" style="
+                            width: 200px;
+                            height: 200px;
+                            background: linear-gradient(135deg, var(--kuhes-primary), var(--kuhes-secondary));
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+                            border: 8px solid white;
+                            animation: pulse 2s infinite;
+                            margin: 0 auto;">
+
+                            <div class="text-center text-white">
+                                <i class="fas fa-university fa-5x mb-3"></i>
+                                <h2 class="fw-bold mb-0">KUHES</h2>
+                                <p class="mb-0 small">Campus Connect</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Quick Stats -->
+<div class="container mb-5">
+    <div class="row g-4">
+        <div class="col-md-3 col-6">
+            <div class="kuhes-card text-center py-4">
+                <div class="kuhes-feature-icon mb-3" style="width: 70px; height: 70px;">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3 class="fw-bold text-kuhes-primary">1,200+</h3>
+                <p class="text-muted mb-0">Active Students</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="kuhes-card text-center py-4">
+                <div class="kuhes-feature-icon mb-3" style="width: 70px; height: 70px;">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <h3 class="fw-bold text-success">85+</h3>
+                <p class="text-muted mb-0">Faculty Members</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="kuhes-card text-center py-4">
+                <div class="kuhes-feature-icon mb-3" style="width: 70px; height: 70px;">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <h3 class="fw-bold text-warning">50+</h3>
+                <p class="text-muted mb-0">Monthly Events</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="kuhes-card text-center py-4">
+                <div class="kuhes-feature-icon mb-3" style="width: 70px; height: 70px;">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <h3 class="fw-bold text-info">300+</h3>
+                <p class="text-muted mb-0">Discussions</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="container">
+    <div class="row">
+        <!-- Left Column: Posts Feed -->
+        <div class="col-lg-8">
+            <!-- Feed Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold text-kuhes-primary">
+                    <i class="fas fa-newspaper me-2"></i>Latest Campus Updates
+                </h2>
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('main.create_post') }}" class="btn btn-kuhes">
+                    <i class="fas fa-plus me-2"></i> New Post
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- Posts Feed -->
+            {% if posts %}
+                {% for post in posts %}
+                <div class="kuhes-card mb-4 post-card" data-post-id="{{ post.id }}">
+                    <div class="kuhes-card-body">
+                        <!-- Post Header -->
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h4 class="fw-bold mb-1">
+                                    <a href="{{ url_for('main.view_post', post_id=post.id) }}"
+                                       class="text-decoration-none text-dark">
+                                        {{ post.title }}
+                                    </a>
+                                </h4>
+                                <div class="d-flex align-items-center">
+                                    <span class="badge-kuhes me-2">{{ post.category|title }}</span>
+                                    <span class="text-muted small">
+                                        <i class="fas fa-user me-1"></i>
+                                        <a href="{{ url_for('main.view_profile', username=post.author.username) }}"
+                                           class="text-decoration-none text-muted">
+                                            {{ post.author.username }}
+                                        </a>
+                                        <i class="fas fa-clock mx-2"></i>
+                                        {{ post.created_at.strftime('%b %d, %Y at %I:%M %p') }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Post Content -->
+                        <p class="mb-4" style="line-height: 1.6;">
+                            {{ post.content[:250] }}
+                            {% if post.content|length > 250 %}
+                            ... <a href="{{ url_for('main.view_post', post_id=post.id) }}" class="text-kuhes-primary">Read more</a>
+                            {% endif %}
+                        </p>
+
+                        <!-- Reactions Bar -->
+                        <div class="border-top border-bottom py-3 mb-3">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <!-- Reaction Counts -->
+                                    <div class="reaction-counts" id="reactionCounts-{{ post.id }}">
+                                        {% set reaction_counts = post.get_reaction_counts() %}
+                                        {% if reaction_counts %}
+                                        <div class="d-flex flex-wrap gap-1">
+                                            {% for reaction_type, count in reaction_counts.items() %}
+                                            {% if count > 0 %}
+                                            <span class="badge bg-light text-dark">
+                                                {% if reaction_type == 'stethoscope' %}
+                                                <i class="fas fa-stethoscope text-primary"></i>
+                                                {% elif reaction_type == 'heartbeat' %}
+                                                <i class="fas fa-heartbeat text-danger"></i>
+                                                {% elif reaction_type == 'pill' %}
+                                                <i class="fas fa-pills text-success"></i>
+                                                {% elif reaction_type == 'syringe' %}
+                                                <i class="fas fa-syringe text-info"></i>
+                                                {% elif reaction_type == 'tooth' %}
+                                                <i class="fas fa-tooth text-warning"></i>
+                                                {% elif reaction_type == 'dna' %}
+                                                <i class="fas fa-dna text-dark"></i>
+                                                {% endif %}
+                                                {{ count }}
+                                            </span>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6 text-end">
+                                    <!-- Comments Count -->
+                                    <span class="text-muted small">
+                                        <i class="fas fa-comment me-1"></i>
+                                        {{ post.comments|length }} comments
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-2">
+                            <!-- Reaction Button -->
+                            <div class="position-relative">
+                                <button class="btn btn-sm btn-outline-primary reaction-btn"
+                                        data-post-id="{{ post.id }}"
+                                        onclick="toggleReactionPicker(event, {{ post.id }})">
+                                    <i class="fas fa-thumbs-up me-1"></i> React
+                                </button>
+
+                                <!-- Reaction Picker -->
+                                <div class="reaction-picker-small" id="reactionPicker-{{ post.id }}" style="display: none;">
+                                    <div class="reaction-options-small">
+                                        <button class="reaction-option-small" data-reaction="stethoscope"
+                                                onclick="reactToPost({{ post.id }}, 'stethoscope')">
+                                            <i class="fas fa-stethoscope"></i>
+                                        </button>
+                                        <button class="reaction-option-small" data-reaction="heartbeat"
+                                                onclick="reactToPost({{ post.id }}, 'heartbeat')">
+                                            <i class="fas fa-heartbeat"></i>
+                                        </button>
+                                        <button class="reaction-option-small" data-reaction="pill"
+                                                onclick="reactToPost({{ post.id }}, 'pill')">
+                                            <i class="fas fa-pills"></i>
+                                        </button>
+                                        <button class="reaction-option-small" data-reaction="syringe"
+                                                onclick="reactToPost({{ post.id }}, 'syringe')">
+                                            <i class="fas fa-syringe"></i>
+                                        </button>
+                                        <button class="reaction-option-small" data-reaction="tooth"
+                                                onclick="reactToPost({{ post.id }}, 'tooth')">
+                                            <i class="fas fa-tooth"></i>
+                                        </button>
+                                        <button class="reaction-option-small" data-reaction="dna"
+                                                onclick="reactToPost({{ post.id }}, 'dna')">
+                                            <i class="fas fa-dna"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Comment Button -->
+                            <a href="{{ url_for('main.view_post', post_id=post.id) }}#comments"
+                               class="btn btn-sm btn-outline-secondary">
+                                <i class="far fa-comment me-1"></i> Comment
+                            </a>
+
+                            <!-- Share Button -->
+                            <button class="btn btn-sm btn-outline-info" onclick="sharePost({{ post.id }})">
+                                <i class="fas fa-share me-1"></i> Share
+                            </button>
+
+                            <!-- View Button -->
+                            <a href="{{ url_for('main.view_post', post_id=post.id) }}"
+                               class="btn btn-sm btn-kuhes-outline ms-auto">
+                                <i class="fas fa-eye me-1"></i> View
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="kuhes-card text-center py-5">
+                    <div class="card-body">
+                        <i class="fas fa-newspaper fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted">No Posts Yet</h4>
+                        <p class="text-muted mb-4">Be the first to share campus news or start a discussion!</p>
+                        {% if not current_user.is_authenticated %}
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-kuhes btn-lg">
+                            <i class="fas fa-user-plus me-2"></i> Join to Start Posting
+                        </a>
+                        {% else %}
+                        <a href="{{ url_for('main.create_post') }}" class="btn btn-kuhes btn-lg">
+                            <i class="fas fa-plus me-2"></i> Create Your First Post
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- View All Button -->
+            {% if posts %}
+            <div class="text-center mt-4">
+                <a href="{{ url_for('main.news') }}" class="btn btn-kuhes-outline btn-lg">
+                    <i class="fas fa-eye me-2"></i> View All Campus Updates
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Column: Sidebar -->
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="kuhes-card mb-4">
+                <div class="kuhes-card-header">
+                    <h5 class="mb-0"><i class="fas fa-bolt me-2"></i> Quick Actions</h5>
+                </div>
+                <div class="kuhes-card-body">
+                    <div class="list-group list-group-flush">
+                        {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('main.create_post') }}" class="list-group-item list-group-item-action border-0 py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="kuhes-avatar me-3">
+                                    <i class="fas fa-plus"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 fw-bold">Create New Post</h6>
+                                    <p class="small text-muted mb-0">Share news or start a discussion</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="{{ url_for('events.create_event') }}" class="list-group-item list-group-item-action border-0 py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="kuhes-avatar me-3" style="background: var(--kuhes-success);">
+                                    <i class="fas fa-calendar-plus"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 fw-bold">Create Event</h6>
+                                    <p class="small text-muted mb-0">Organize campus activities</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="{{ url_for('main.notifications') }}" class="list-group-item list-group-item-action border-0 py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="kuhes-avatar me-3" style="background: var(--kuhes-warning);">
+                                    <i class="fas fa-bell"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 fw-bold">Notifications</h6>
+                                    <p class="small text-muted mb-0">Check your updates</p>
+                                </div>
+                            </div>
+                        </a>
+                        {% else %}
+                        <a href="{{ url_for('auth.register') }}" class="list-group-item list-group-item-action border-0 py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="kuhes-avatar me-3">
+                                    <i class="fas fa-user-plus"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 fw-bold">Create Account</h6>
+                                    <p class="small text-muted mb-0">Join our campus community</p>
+                                </div>
+                            </div>
+                        </a>
+                        <a href="{{ url_for('auth.login') }}" class="list-group-item list-group-item-action border-0 py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="kuhes-avatar me-3" style="background: var(--kuhes-success);">
+                                    <i class="fas fa-sign-in-alt"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 fw-bold">Login</h6>
+                                    <p class="small text-muted mb-0">Access your account</p>
+                                </div>
+                            </div>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming Events -->
+            <div class="kuhes-card mb-4">
+                <div class="kuhes-card-header">
+                    <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i> Upcoming Events</h5>
+                </div>
+                <div class="kuhes-card-body">
+                    {% set upcoming_events = events|selectattr('status', 'equalto', 'approved')|list|sort(attribute='start_date') %}
+                    {% if upcoming_events %}
+                        {% for event in upcoming_events[:3] %}
+                        <div class="event-item mb-3 pb-3 border-bottom">
+                            <div class="d-flex align-items-start">
+                                <div class="event-date text-center me-3" style="min-width: 60px;">
+                                    <div class="fw-bold text-kuhes-primary">{{ event.start_date.strftime('%d') }}</div>
+                                    <div class="small text-uppercase">{{ event.start_date.strftime('%b') }}</div>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">{{ event.title[:40] }}{% if event.title|length > 40 %}...{% endif %}</h6>
+                                    <p class="small text-muted mb-1">
+                                        <i class="fas fa-clock me-1"></i> {{ event.start_date.strftime('%I:%M %p') }}
+                                    </p>
+                                    <p class="small text-muted mb-0">
+                                        <i class="fas fa-map-marker-alt me-1"></i> {{ event.venue[:20] }}{% if event.venue|length > 20 %}...{% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        <div class="text-center">
+                            <a href="{{ url_for('events.events_home') }}" class="btn btn-sm btn-kuhes-outline">
+                                <i class="fas fa-calendar me-2"></i> View All Events
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-calendar-times fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No upcoming events</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="kuhes-card">
+                <div class="kuhes-card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i> Campus Stats</h5>
+                </div>
+                <div class="kuhes-card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="display-6 fw-bold text-kuhes-primary">{{ post_count }}</div>
+                            <p class="small text-muted mb-0">Posts</p>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="display-6 fw-bold text-success">{{ event_count }}</div>
+                            <p class="small text-muted mb-0">Events</p>
+                        </div>
+                        <div class="col-6">
+                            <div class="display-6 fw-bold text-warning">{{ user_count }}</div>
+                            <p class="small text-muted mb-0">Users</p>
+                        </div>
+                        <div class="col-6">
+                            <div class="display-6 fw-bold text-info">{{ comment_count }}</div>
+                            <p class="small text-muted mb-0">Comments</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Home Feed Interactions - FIXED VERSION -->
+<script>
+    // Toggle reaction picker
+    function toggleReactionPicker(event, postId) {
+        event.stopPropagation();
+        const picker = document.getElementById(`reactionPicker-${postId}`);
+        const isVisible = picker.style.display === 'block';
+
+        // Hide all other pickers
+        document.querySelectorAll('.reaction-picker-small').forEach(p => {
+            p.style.display = 'none';
+        });
+
+        // Toggle current picker
+        picker.style.display = isVisible ? 'none' : 'block';
+
+        // Position picker
+        if (!isVisible) {
+            const button = event.target.closest('.reaction-btn');
+            const rect = button.getBoundingClientRect();
+            picker.style.position = 'absolute';
+            picker.style.left = '0';
+            picker.style.top = '-60px';
+            picker.style.zIndex = '1000';
+        }
+    }
+
+    // React to post from home feed - FIXED VERSION
+    function reactToPost(postId, reactionType) {
+        {% if not current_user.is_authenticated %}
+        window.location.href = "{{ url_for('auth.login') }}";
+        return;
+        {% endif %}
+
+        // Get the reaction button
+        const reactionButton = document.querySelector(`button[onclick="reactToPost(${postId}, '${reactionType}')"]`);
+        const originalHTML = reactionButton.innerHTML;
+
+        // Show loading state
+        reactionButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        reactionButton.disabled = true;
+
+        // Make the fetch request
+        fetch(`/post/${postId}/react/${reactionType}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            // Check if response is okay and is JSON
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new TypeError('Server returned non-JSON response');
+            }
+
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Update reaction counts display
+                updateReactionCounts(postId, data.reaction_counts);
+
+                // Update main reaction button text
+                const mainButton = document.querySelector(`.reaction-btn[data-post-id="${postId}"]`);
+                const reactionNames = {
+                    'stethoscope': 'Stethoscope',
+                    'heartbeat': 'Heartbeat',
+                    'pill': 'Pill',
+                    'syringe': 'Syringe',
+                    'tooth': 'Tooth',
+                    'dna': 'DNA'
+                };
+
+                if (mainButton) {
+                    const iconClass = getReactionIcon(reactionType);
+                    mainButton.innerHTML = `<i class="fas ${iconClass} me-1"></i> ${reactionNames[reactionType]}`;
+
+                    // Add animation feedback
+                    mainButton.classList.add('animate__animated', 'animate__bounce');
+                    setTimeout(() => {
+                        mainButton.classList.remove('animate__animated', 'animate__bounce');
+                    }, 1000);
+                }
+
+                // Hide picker
+                document.getElementById(`reactionPicker-${postId}`).style.display = 'none';
+
+                // Update notification badge
+                updateNotificationBadge();
+
+                // Show success message
+                console.log('Reaction added successfully!');
+            } else {
+                // Show error from server
+                alert('Error: ' + (data.error || 'Unknown error occurred'));
+                console.error('Server error:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            alert('Failed to add reaction. Please check your connection and try again.');
+        })
+        .finally(() => {
+            // Restore button state
+            reactionButton.innerHTML = originalHTML;
+            reactionButton.disabled = false;
+        });
+    }
+
+    // Update reaction counts display
+    function updateReactionCounts(postId, reactionCounts) {
+        const container = document.getElementById(`reactionCounts-${postId}`);
+        if (!container) return;
+
+        let html = '<div class="d-flex flex-wrap gap-1">';
+
+        // Map reaction types to icons and colors
+        const reactionMap = {
+            'stethoscope': { icon: 'fa-stethoscope', color: 'text-primary' },
+            'heartbeat': { icon: 'fa-heartbeat', color: 'text-danger' },
+            'pill': { icon: 'fa-pills', color: 'text-success' },
+            'syringe': { icon: 'fa-syringe', color: 'text-info' },
+            'tooth': { icon: 'fa-tooth', color: 'text-warning' },
+            'dna': { icon: 'fa-dna', color: 'text-dark' }
+        };
+
+        // Add badges for each reaction type with count > 0
+        if (reactionCounts) {
+            Object.entries(reactionCounts).forEach(([reaction, count]) => {
+                if (count > 0 && reactionMap[reaction]) {
+                    html += `
+                        <span class="badge bg-light text-dark">
+                            <i class="fas ${reactionMap[reaction].icon} ${reactionMap[reaction].color}"></i>
+                            ${count}
+                        </span>
+                    `;
+                }
+            });
+        }
+
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    // Get reaction icon
+    function getReactionIcon(reactionType) {
+        const icons = {
+            'stethoscope': 'fa-stethoscope',
+            'heartbeat': 'fa-heartbeat',
+            'pill': 'fa-pills',
+            'syringe': 'fa-syringe',
+            'tooth': 'fa-tooth',
+            'dna': 'fa-dna'
+        };
+        return icons[reactionType] || 'fa-thumbs-up';
+    }
+
+    // Share post
+    function sharePost(postId) {
+        const url = `${window.location.origin}/post/${postId}`;
+        if (navigator.share) {
+            navigator.share({
+                title: 'Check out this post on KUHES Campus Connect',
+                url: url
+            });
+        } else {
+            // Fallback: copy to clipboard
+            navigator.clipboard.writeText(url).then(() => {
+                alert('Link copied to clipboard!');
+            });
+        }
+    }
+
+    // Close pickers when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.reaction-picker-small') &&
+            !event.target.closest('.reaction-btn')) {
+            document.querySelectorAll('.reaction-picker-small').forEach(p => {
+                p.style.display = 'none';
+            });
+        }
+    });
+
+    // Update notification badge
+    function updateNotificationBadge() {
+        {% if current_user.is_authenticated %}
+        fetch('/notifications/count')
+            .then(response => response.json())
+            .then(data => {
+                const badges = document.querySelectorAll('#notificationBadge, #notificationBadge2');
+                badges.forEach(badge => {
+                    if (data.count > 0) {
+                        badge.textContent = data.count;
+                        badge.style.display = 'inline-block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                });
+            })
+            .catch(error => console.error('Error updating notification badge:', error));
+        {% endif %}
+    }
+
+    // Add hover effects to post cards
+    document.querySelectorAll('.post-card').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+        });
+
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+</script>
+
+<style>
+    /* Animation for floating background */
+    @keyframes float {
+        0% { background-position: 0 0; }
+        100% { background-position: 50px 50px; }
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    /* Reaction picker styles */
+    .reaction-picker-small {
+        position: absolute;
+        background: var(--card-bg);
+        border-radius: 25px;
+        padding: 8px;
+        box-shadow: 0 5px 20px var(--shadow-color);
+        border: 1px solid var(--border-color);
+        z-index: 1000;
+    }
+
+    .reaction-options-small {
+        display: flex;
+        gap: 5px;
+    }
+
+    .reaction-option-small {
+        width: 35px;
+        height: 35px;
+        border: none;
+        background: var(--card-bg);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: var(--text-color);
+    }
+
+    .reaction-option-small:hover {
+        transform: scale(1.2);
+        background: rgba(0, 86, 179, 0.1);
+    }
+
+    .reaction-option-small i {
+        font-size: 1.2rem;
+    }
+
+    /* Post card transitions */
+    .post-card {
+        transition: all 0.3s ease;
+    }
+
+    .post-card:hover {
+        box-shadow: 0 10px 30px var(--shadow-color) !important;
+    }
+
+    /* Badge styles */
+    .badge.bg-light {
+        background-color: var(--kuhes-light) !important;
+        color: var(--text-color) !important;
+        border: 1px solid var(--border-color);
+    }
+
+    /* Event date styles */
+    .event-date {
+        background: rgba(0, 86, 179, 0.1);
+        padding: 5px;
+        border-radius: 5px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .kuhes-hero {
+            padding: 60px 0 !important;
+        }
+
+        .kuhes-hero h1 {
+            font-size: 2rem !important;
+        }
+
+        .kuhes-feature-icon {
+            width: 50px !important;
+            height: 50px !important;
+        }
+
+        .display-6 {
+            font-size: 1.5rem !important;
+        }
+    }
+</style>
+{% endblock %}

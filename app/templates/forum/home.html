@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+
+{% block title %}Forum - KUHES Campus Connect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="row mb-5">
+        <div class="col-md-8">
+            <h1 class="display-5 fw-bold text-primary mb-3">
+                <i class="fas fa-comments me-3"></i>Campus Forum
+            </h1>
+            <p class="lead text-muted">
+                Discuss, share ideas, and connect with fellow KUHES students and faculty
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('main.create_post') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus-circle me-2"></i> New Discussion
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Categories Navigation -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <h5 class="card-title mb-3">
+                <i class="fas fa-tags me-2"></i> Browse by Category
+            </h5>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{{ url_for('forum.forum_home') }}"
+                   class="btn btn-outline-primary {% if category == 'all' %}active{% endif %}">
+                    All Categories
+                </a>
+                <a href="{{ url_for('forum.forum_home') }}?category=news"
+                   class="btn btn-outline-primary {% if category == 'news' %}active{% endif %}">
+                    📰 Campus News
+                </a>
+                <a href="{{ url_for('forum.forum_home') }}?category=academic"
+                   class="btn btn-outline-primary {% if category == 'academic' %}active{% endif %}">
+                    🎓 Academic
+                </a>
+                <a href="{{ url_for('forum.forum_home') }}?category=question"
+                   class="btn btn-outline-primary {% if category == 'question' %}active{% endif %}">
+                    ❓ Questions
+                </a>
+                <a href="{{ url_for('forum.forum_home') }}?category=discussion"
+                   class="btn btn-outline-primary {% if category == 'discussion' %}active{% endif %}">
+                    💬 Discussions
+                </a>
+                <a href="{{ url_for('forum.forum_home') }}?category=study_group"
+                   class="btn btn-outline-primary {% if category == 'study_group' %}active{% endif %}">
+                    👥 Study Groups
+                </a>
+                <a href="{{ url_for('forum.forum_home') }}?category=resource"
+                   class="btn btn-outline-primary {% if category == 'resource' %}active{% endif %}">
+                    📚 Resources
+                </a>
+                <a href="{{ url_for('forum.categories') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-ellipsis-h me-1"></i> More
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <form action="{{ url_for('forum.search') }}" method="GET" class="row g-3">
+                <div class="col-md-10">
+                    <div class="input-group">
+                        <span class="input-group-text bg-primary text-white">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" name="q" class="form-control form-control-lg"
+                               placeholder="Search discussions, topics, or users..."
+                               value="{{ query if query }}">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Posts List -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold">
+                    <i class="fas fa-stream me-2"></i> Recent Discussions
+                    <span class="badge bg-primary ms-2">{{ posts.total }}</span>
+                </h5>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-fire"></i> Trending
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-clock"></i> Recent
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-comment"></i> Most Comments
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+            {% if posts.items %}
+                {% for post in posts.items %}
+                <div class="forum-post p-4 border-bottom">
+                    <div class="row">
+                        <div class="col-md-1 text-center d-none d-md-block">
+                            <div class="forum-post-avatar">
+                                <i class="fas fa-user-md fa-2x text-primary"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <h5 class="mb-2">
+                                <a href="{{ url_for('main.view_post', post_id=post.id) }}"
+                                   class="text-decoration-none text-dark fw-bold">
+                                    {{ post.title }}
+                                </a>
+                            </h5>
+                            <p class="text-muted small mb-2">
+                                <i class="fas fa-user me-1"></i>
+                                <a href="{{ url_for('main.view_profile', username=post.author.username) }}"
+                                   class="text-decoration-none">
+                                    {{ post.author.get_full_name() }}
+                                </a>
+                                <i class="fas fa-clock mx-2"></i> {{ post.created_at.strftime('%b %d, %Y at %I:%M %p') }}
+                                <i class="fas fa-tag mx-2"></i>
+                                <span class="badge bg-secondary">{{ post.category|title }}</span>
+                            </p>
+                            <p class="mb-0 text-muted">
+                                {{ post.content[:200] }}{% if post.content|length > 200 %}...{% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <div class="forum-stats">
+                                <div class="stat-item mb-2">
+                                    <div class="stat-number">{{ post.comments|length }}</div>
+                                    <div class="stat-label small">Replies</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">{{ post.reactions|length }}</div>
+                                    <div class="stat-label small">Reactions</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-comments fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">No discussions found</h4>
+                    <p class="text-muted mb-4">
+                        {% if category != 'all' %}
+                        No posts in the "{{ category }}" category yet.
+                        {% else %}
+                        Be the first to start a discussion!
+                        {% endif %}
+                    </p>
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('main.create_post') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus-circle me-2"></i> Start a Discussion
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-sign-in-alt me-2"></i> Login to Post
+                    </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Pagination -->
+        {% if posts.pages > 1 %}
+        <div class="card-footer bg-light">
+            <nav aria-label="Forum pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if posts.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('forum.forum_home', page=posts.prev_num, category=category) }}">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for page_num in posts.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                        {% if page_num %}
+                            {% if page_num == posts.page %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('forum.forum_home', page=page_num, category=category) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if posts.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('forum.forum_home', page=posts.next_num, category=category) }}">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mt-4">
+        <div class="col-md-3 col-6">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h2 class="fw-bold text-primary">{{ posts.total }}</h2>
+                    <p class="small text-muted mb-0">Total Discussions</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h2 class="fw-bold text-success">
+                        {{ ((posts.total or 0) / (posts.pages or 1))|round|int }}
+                    </h2>
+                    <p class="small text-muted mb-0">Posts per Page</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h2 class="fw-bold text-info">{{ posts.pages }}</h2>
+                    <p class="small text-muted mb-0">Total Pages</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h2 class="fw-bold text-warning">
+                        {% if posts.items %}
+                            {{ posts.items[0].author.username }}
+                        {% else %}
+                            --
+                        {% endif %}
+                    </h2>
+                    <p class="small text-muted mb-0">Latest Poster</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .forum-post {
+        transition: all 0.3s ease;
+    }
+
+    .forum-post:hover {
+        background-color: #f8f9fa;
+    }
+
+    .forum-post-avatar {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #0056b3, #28a745);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        margin: 0 auto;
+    }
+
+    .forum-stats {
+        text-align: center;
+    }
+
+    .stat-item {
+        padding: 8px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .stat-number {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #0056b3;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .page-link {
+        color: #0056b3;
+        border-color: #dee2e6;
+    }
+
+    .page-link:hover {
+        color: #004494;
+        background-color: #e9ecef;
+        border-color: #dee2e6;
+    }
+
+    .page-item.active .page-link {
+        background-color: #0056b3;
+        border-color: #0056b3;
+    }
+
+    .btn-outline-primary.active {
+        background-color: #0056b3;
+        color: white;
+        border-color: #0056b3;
+    }
+</style>
+{% endblock %}

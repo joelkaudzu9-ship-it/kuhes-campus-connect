@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block title %}Forum Categories - KUHES Campus Connect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="row mb-5">
+        <div class="col-md-8">
+            <h1 class="display-5 fw-bold text-primary mb-3">
+                <i class="fas fa-folder me-3"></i>Forum Categories
+            </h1>
+            <p class="lead text-muted">
+                Browse discussions by topic and join conversations that interest you
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('forum.forum_home') }}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i> Back to Forum
+            </a>
+        </div>
+    </div>
+
+    <!-- Categories Grid -->
+    <div class="row">
+        {% if categories %}
+            {% for category in categories %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 category-card shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h5 class="card-title fw-bold mb-1">
+                                    {% if category == 'news' %}📰 Campus News
+                                    {% elif category == 'announcement' %}📢 Announcements
+                                    {% elif category == 'academic' %}🎓 Academic
+                                    {% elif category == 'question' %}❓ Questions
+                                    {% elif category == 'discussion' %}💬 Discussions
+                                    {% elif category == 'study_group' %}👥 Study Groups
+                                    {% elif category == 'resource' %}📚 Resources
+                                    {% elif category == 'event' %}📅 Events
+                                    {% elif category == 'sports' %}⚽ Sports
+                                    {% elif category == 'religious' %}🙏 Religious
+                                    {% elif category == 'social' %}👥 Social
+                                    {% elif category == 'job' %}💼 Job Opportunities
+                                    {% elif category == 'housing' %}🏠 Housing
+                                    {% else %}📁 {{ category|title }}
+                                    {% endif %}
+                                </h5>
+                                <p class="text-muted small mb-0">
+                                    {{ category_counts.get(category, 0) }} discussions
+                                </p>
+                            </div>
+                            <span class="badge bg-primary fs-6">
+                                {{ category_counts.get(category, 0) }}
+                            </span>
+                        </div>
+                        <p class="card-text text-muted mb-4">
+                            {% if category == 'news' %}
+                            Latest campus updates, official announcements, and important news
+                            {% elif category == 'announcement' %}
+                            Official notices from administration and faculty
+                            {% elif category == 'academic' %}
+                            Course discussions, exam tips, and academic resources
+                            {% elif category == 'question' %}
+                            Ask questions and get answers from the community
+                            {% elif category == 'discussion' %}
+                            General discussions and conversations
+                            {% elif category == 'study_group' %}
+                            Find study partners and form study groups
+                            {% elif category == 'resource' %}
+                            Share and find study materials, books, and resources
+                            {% elif category == 'event' %}
+                            Campus events, seminars, and activities
+                            {% elif category == 'sports' %}
+                            Sports activities, teams, and competitions
+                            {% elif category == 'religious' %}
+                            Religious activities and discussions
+                            {% elif category == 'social' %}
+                            Social events and networking
+                            {% elif category == 'job' %}
+                            Job opportunities, internships, and career advice
+                            {% elif category == 'housing' %}
+                            Accommodation, hostels, and housing information
+                            {% else %}
+                            Discussions related to {{ category }}
+                            {% endif %}
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{{ url_for('forum.forum_home') }}?category={{ category }}"
+                               class="btn btn-primary">
+                                <i class="fas fa-eye me-2"></i> View Category
+                            </a>
+                            {% if current_user.is_authenticated %}
+                            <a href="{{ url_for('main.create_post') }}?category={{ category }}"
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-plus me-1"></i> New Post
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="col-12">
+            <div class="card text-center py-5">
+                <div class="card-body">
+                    <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">No categories yet</h4>
+                    <p class="text-muted mb-4">
+                        Categories will appear when discussions are created.
+                    </p>
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('main.create_post') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-plus-circle me-2"></i> Create First Discussion
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Category Stats -->
+    <div class="card mt-5 shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i> Category Statistics</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Most Active Categories</h6>
+                    <div class="list-group">
+                        {% for category, count in category_counts.items()|sort(attribute='1', reverse=True)|slice(0,5) %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>
+                                {% if category == 'news' %}📰 Campus News
+                                {% elif category == 'announcement' %}📢 Announcements
+                                {% elif category == 'academic' %}🎓 Academic
+                                {% else %}{{ category|title }}
+                                {% endif %}
+                            </span>
+                            <span class="badge bg-primary rounded-pill">{{ count }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h6>Category Distribution</h6>
+                    <div class="progress-stack">
+                        {% set total_posts = category_counts.values()|sum %}
+                        {% for category, count in category_counts.items()|sort(attribute='1', reverse=True)|slice(0,6) %}
+                        {% if total_posts > 0 %}
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="small">
+                                    {{ category|title }}
+                                </span>
+                                <span class="small fw-bold">{{ ((count/total_posts)*100)|round(1) }}%</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar" role="progressbar"
+                                     style="width: {{ (count/total_posts)*100 }}%; background-color: {{
+                                        'var(--kuhes-blue)' if loop.index == 1 else
+                                        'var(--kuhes-green)' if loop.index == 2 else
+                                        'var(--bs-warning)' if loop.index == 3 else
+                                        'var(--bs-info)' if loop.index == 4 else
+                                        'var(--bs-danger)' if loop.index == 5 else
+                                        'var(--bs-secondary)'
+                                     }};"></div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create New Category (Admin Only) -->
+    {% if current_user.is_authenticated and current_user.is_admin() %}
+    <div class="card mt-4 shadow-sm">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i> Admin: Manage Categories</h5>
+        </div>
+        <div class="card-body">
+            <p class="text-muted mb-3">
+                As an administrator, you can manage forum categories and their settings.
+            </p>
+            <div class="d-flex gap-2">
+                <button class="btn btn-success">
+                    <i class="fas fa-plus me-2"></i> Add New Category
+                </button>
+                <button class="btn btn-outline-secondary">
+                    <i class="fas fa-edit me-2"></i> Edit Categories
+                </button>
+                <button class="btn btn-outline-danger">
+                    <i class="fas fa-trash me-2"></i> Remove Inactive
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .category-card {
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .category-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        border-color: #0056b3;
+    }
+
+    .progress-stack .progress {
+        border-radius: 4px;
+    }
+
+    .progress-bar {
+        border-radius: 4px;
+    }
+
+    .list-group-item {
+        border: none;
+        border-bottom: 1px solid #dee2e6;
+        transition: all 0.2s ease;
+    }
+
+    .list-group-item:last-child {
+        border-bottom: none;
+    }
+
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+        padding-left: 20px;
+    }
+
+    :root {
+        --kuhes-blue: #0056b3;
+        --kuhes-green: #28a745;
+    }
+</style>
+{% endblock %}

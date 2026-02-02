@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications - KUHES Campus Connect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="row mb-5">
+        <div class="col-md-8">
+            <h1 class="display-5 fw-bold text-kuhes-primary mb-3">
+                <i class="fas fa-bell me-3"></i>Notifications
+            </h1>
+            <p class="lead text-muted">
+                Stay updated with campus activities and interactions
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            {% if notifications.total > 0 %}
+            <button class="btn btn-kuhes-outline" onclick="clearAllNotifications()">
+                <i class="fas fa-trash-alt me-2"></i> Clear All
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="kuhes-card">
+        <div class="kuhes-card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-list me-2"></i> All Notifications
+                    <span class="badge bg-primary ms-2">{{ notifications.total }}</span>
+                </h4>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-kuhes-outline dropdown-toggle"
+                            type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-filter me-1"></i> Filter
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('main.notifications') }}">
+                                All Notifications
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('main.notifications') }}?filter=unread">
+                                Unread Only
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('main.notifications') }}?filter=read">
+                                Read Only
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="kuhes-card-body p-0">
+            {% if notifications.items %}
+                {% for notification in notifications.items %}
+                <div class="notification-item p-4 border-bottom {% if not notification.is_read %}bg-light{% endif %}">
+                    <div class="d-flex">
+                        <!-- Notification Icon -->
+                        <div class="notification-icon me-3">
+                            {% if notification.notification_type == 'post_reaction' %}
+                            <i class="fas fa-heart text-danger fa-2x"></i>
+                            {% elif notification.notification_type == 'comment' %}
+                            <i class="fas fa-comment text-info fa-2x"></i>
+                            {% elif 'event' in notification.notification_type %}
+                            <i class="fas fa-calendar-check text-success fa-2x"></i>
+                            {% else %}
+                            <i class="fas fa-bell text-warning fa-2x"></i>
+                            {% endif %}
+                        </div>
+
+                        <!-- Notification Content -->
+                        <div class="flex-grow-1">
+                            <h6 class="fw-bold mb-1 {% if not notification.is_read %}text-kuhes-primary{% endif %}">
+                                {{ notification.title }}
+                                {% if not notification.is_read %}
+                                <span class="badge bg-danger ms-2">New</span>
+                                {% endif %}
+                            </h6>
+                            <p class="mb-2">{{ notification.message }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>
+                                    {{ notification.created_at.strftime('%b %d, %Y at %I:%M %p') }}
+                                </small>
+                                <div class="btn-group">
+                                    {% if notification.related_id and notification.notification_type == 'post_reaction' %}
+                                    <a href="{{ url_for('main.view_post', post_id=notification.related_id) }}"
+                                       class="btn btn-sm btn-kuhes-outline">
+                                        View Post
+                                    </a>
+                                    {% endif %}
+                                    {% if not notification.is_read %}
+                                    <button class="btn btn-sm btn-outline-success"
+                                            onclick="markAsRead({{ notification.id }})">
+                                        <i class="fas fa-check me-1"></i> Mark Read
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Delete Button -->
+                        <div class="ms-3">
+                            <button class="btn btn-sm btn-outline-danger"
+                                    onclick="deleteNotification({{ notification.id }})">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-bell-slash fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Notifications</h4>
+                    <p class="text-muted mb-4">You're all caught up!</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Pagination -->
+        {% if notifications.pages > 1 %}
+        <div class="kuhes-card-footer">
+            <nav aria-label="Notifications pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if notifications.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('main.notifications', page=notifications.prev_num) }}">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for page_num in notifications.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                        {% if page_num %}
+                            {% if page_num == notifications.page %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('main.notifications', page=page_num) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if notifications.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('main.notifications', page=notifications.next_num) }}">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Mark notification as read
+    function markAsRead(notificationId) {
+        fetch(`/notifications/${notificationId}/read`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update UI
+                const notificationItem = document.querySelector(`button[onclick="markAsRead(${notificationId})"]`).closest('.notification-item');
+                notificationItem.classList.remove('bg-light');
+
+                // Remove "New" badge
+                const badge = notificationItem.querySelector('.badge.bg-danger');
+                if (badge) badge.remove();
+
+                // Change button
+                const button = notificationItem.querySelector(`button[onclick="markAsRead(${notificationId})"]`);
+                button.classList.remove('btn-outline-success');
+                button.classList.add('btn-outline-secondary');
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-check me-1"></i> Read';
+
+                // Update notification count in navbar
+                updateNotificationCount();
+            }
+        });
+    }
+
+    // Delete single notification
+    function deleteNotification(notificationId) {
+        if (confirm('Delete this notification?')) {
+            fetch(`/notifications/${notificationId}/delete`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove from DOM
+                    const notificationItem = document.querySelector(`button[onclick="deleteNotification(${notificationId})"]`).closest('.notification-item');
+                    notificationItem.remove();
+
+                    // Update count
+                    updateNotificationCount();
+                }
+            });
+        }
+    }
+
+    // Clear all notifications
+    function clearAllNotifications() {
+        if (confirm('Clear all notifications? This cannot be undone.')) {
+            fetch('/notifications/clear', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload page
+                    location.reload();
+                }
+            });
+        }
+    }
+
+    // Update notification count in navbar
+    function updateNotificationCount() {
+        fetch('/notifications/count')
+            .then(response => response.json())
+            .then(data => {
+                const badge = document.querySelector('#notificationBadge');
+                if (badge) {
+                    if (data.count > 0) {
+                        badge.textContent = data.count;
+                        badge.style.display = 'inline-block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+            });
+    }
+
+    // Update count on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateNotificationCount();
+    });
+</script>
+
+<style>
+    .notification-item {
+        transition: all 0.3s ease;
+    }
+
+    .notification-item:hover {
+        background-color: rgba(0, 86, 179, 0.05) !important;
+    }
+
+    .notification-icon {
+        flex-shrink: 0;
+    }
+
+    .notification-item.unread {
+        border-left: 4px solid var(--kuhes-primary);
+    }
+</style>
+{% endblock %}

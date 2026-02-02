@@ -1,0 +1,839 @@
+{% extends "base.html" %}
+
+{% block title %}{{ post.title }} - KUHES Campus Connect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Back Button -->
+    <div class="mb-4">
+        <a href="{{ url_for('main.home') }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i> Back to Home
+        </a>
+    </div>
+
+    <!-- Post Content -->
+    <div class="card border-0 shadow-lg mb-4">
+        <div class="card-body p-4">
+            <!-- Post Header -->
+            <div class="d-flex justify-content-between align-items-start mb-4">
+                <div>
+                    <h1 class="fw-bold mb-2">{{ post.title }}</h1>
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <span class="badge bg-primary px-3 py-2">{{ post.category|title }}</span>
+                        </div>
+                        <div class="text-muted">
+                            <i class="fas fa-user me-1"></i> {{ post.author.username }}
+                            <i class="fas fa-calendar ms-3 me-1"></i> {{ post.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delete Button (only for post owner or admin) -->
+                {% if current_user.is_authenticated and (current_user.id == post.user_id or current_user.is_admin()) %}
+                <button class="btn btn-outline-danger btn-sm" onclick="deletePost({{ post.id }})">
+                    <i class="fas fa-trash me-1"></i> Delete
+                </button>
+                {% endif %}
+            </div>
+
+            <!-- Post Content -->
+            <div class="post-content mb-5">
+                <p style="font-size: 1.1rem; line-height: 1.8; white-space: pre-line;">{{ post.content }}</p>
+            </div>
+
+            <!-- Facebook-style Medical Reactions -->
+            <div class="border-top border-bottom py-4 mb-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="fw-bold text-primary mb-0">
+                            <i class="fas fa-heartbeat me-2"></i> Medical Reactions
+                        </h5>
+                    </div>
+
+                    <!-- Total Reactions Count -->
+                    <div id="totalReactions" class="text-muted">
+                        <span id="reactionsCount">0</span> reactions
+                    </div>
+                </div>
+
+                <!-- Reaction Bar -->
+                <div class="mt-4">
+                    <!-- Reaction Button Container -->
+                    <div class="position-relative" style="max-width: 300px;">
+                        <!-- Main Reaction Button -->
+                        <button class="btn btn-outline-primary w-100 reaction-main-btn"
+                                id="reactionMainBtn"
+                                onmouseenter="showReactionPicker()"
+                                onmouseleave="hideReactionPicker()">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <i class="fas fa-thumbs-up me-2"></i>
+                                <span id="reactionText">React</span>
+                            </div>
+                        </button>
+
+                        <!-- Reaction Picker (Hidden by default) -->
+                        <div class="reaction-picker" id="reactionPicker"
+                             onmouseenter="keepPickerOpen()"
+                             onmouseleave="hideReactionPicker()">
+                            <div class="reaction-picker-content">
+                                <div class="reaction-options">
+                                    <button class="reaction-option"
+                                            data-reaction="stethoscope"
+                                            onclick="selectReaction('stethoscope')"
+                                            onmouseenter="previewReaction('stethoscope', 'Stethoscope')">
+                                        <i class="fas fa-stethoscope"></i>
+                                        <span class="reaction-label">Stethoscope</span>
+                                    </button>
+
+                                    <button class="reaction-option"
+                                            data-reaction="heartbeat"
+                                            onclick="selectReaction('heartbeat')"
+                                            onmouseenter="previewReaction('heartbeat', 'Heartbeat')">
+                                        <i class="fas fa-heartbeat"></i>
+                                        <span class="reaction-label">Heartbeat</span>
+                                    </button>
+
+                                    <button class="reaction-option"
+                                            data-reaction="pill"
+                                            onclick="selectReaction('pill')"
+                                            onmouseenter="previewReaction('pill', 'Pill')">
+                                        <i class="fas fa-pills"></i>
+                                        <span class="reaction-label">Pill</span>
+                                    </button>
+
+                                    <button class="reaction-option"
+                                            data-reaction="syringe"
+                                            onclick="selectReaction('syringe')"
+                                            onmouseenter="previewReaction('syringe', 'Syringe')">
+                                        <i class="fas fa-syringe"></i>
+                                        <span class="reaction-label">Syringe</span>
+                                    </button>
+
+                                    <button class="reaction-option"
+                                            data-reaction="tooth"
+                                            onclick="selectReaction('tooth')"
+                                            onmouseenter="previewReaction('tooth', 'Tooth')">
+                                        <i class="fas fa-tooth"></i>
+                                        <span class="reaction-label">Tooth</span>
+                                    </button>
+
+                                    <button class="reaction-option"
+                                            data-reaction="dna"
+                                            onclick="selectReaction('dna')"
+                                            onmouseenter="previewReaction('dna', 'DNA')">
+                                        <i class="fas fa-dna"></i>
+                                        <span class="reaction-label">DNA</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reaction Breakdown -->
+                    <div class="mt-4" id="reactionBreakdown">
+                        <div class="reaction-breakdown">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comments Section -->
+            <div class="mt-5">
+                <h4 class="fw-bold mb-4">
+                    <i class="fas fa-comments me-2"></i> Comments
+                    <span class="badge bg-secondary" id="commentsCount">{{ post.comments|length }}</span>
+                </h4>
+
+                <!-- Add Comment Form -->
+                {% if current_user.is_authenticated %}
+                <div class="card mb-4 border-primary">
+                    <div class="card-body">
+                        <form id="commentForm" onsubmit="addComment(event, {{ post.id }})">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Add a Comment</label>
+                                <textarea class="form-control" id="commentContent" rows="3"
+                                          placeholder="Share your thoughts..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-2"></i> Post Comment
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Please <a href="{{ url_for('auth.login') }}" class="alert-link">login</a> to add comments.
+                </div>
+                {% endif %}
+
+                <!-- Comments List -->
+                <div id="commentsContainer">
+                    {% if post.comments %}
+                        {% for comment in post.comments|sort(attribute='created_at', reverse=false) %}
+                        <div class="card mb-3 comment-card" id="comment-{{ comment.id }}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <strong>{{ comment.author.username }}</strong>
+                                        <span class="text-muted small ms-2">
+                                            <i class="fas fa-clock me-1"></i>
+                                            {{ comment.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                                        </span>
+                                    </div>
+                                    {% if current_user.is_authenticated and (current_user.id == comment.user_id or current_user.id == post.user_id or current_user.is_admin()) %}
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            onclick="deleteComment({{ comment.id }})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                                <p class="mb-0" style="white-space: pre-line;">{{ comment.content }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-comment-slash fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No comments yet. Be the first to share your thoughts!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for interactions -->
+<script>
+    // Initialize variables
+    let currentUserReaction = null;
+    let reactionCounts = {};
+    let pickerTimeout;
+    let pickerVisible = false;
+
+    // Load reactions on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadReactions();
+
+        // Set up reaction button events
+        const mainBtn = document.getElementById('reactionMainBtn');
+
+        // Only add event listeners if user is logged in
+        {% if current_user.is_authenticated %}
+        // Touch support for mobile
+        mainBtn.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            showReactionPicker();
+        });
+
+        // Add press and hold for mobile
+        let pressTimer;
+        mainBtn.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            pressTimer = setTimeout(() => {
+                showReactionPicker();
+            }, 500);
+        });
+
+        mainBtn.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            clearTimeout(pressTimer);
+        });
+
+        // Add click to react
+        mainBtn.addEventListener('click', function(e) {
+            if (!pickerVisible && !currentUserReaction) {
+                // Quick react with stethoscope (default)
+                selectReaction('stethoscope');
+            } else if (!pickerVisible && currentUserReaction) {
+                // Remove reaction if clicked and no picker
+                selectReaction('remove');
+            }
+        });
+        {% else %}
+        // If not logged in, redirect to login on reaction click
+        mainBtn.addEventListener('click', function() {
+            window.location.href = "{{ url_for('auth.login') }}";
+        });
+        {% endif %}
+    });
+
+    // Load reactions from server
+    function loadReactions() {
+        fetch(`/post/{{ post.id }}/reactions`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load reactions');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    reactionCounts = data.reaction_counts;
+                    currentUserReaction = data.user_reaction;
+                    updateReactionUI();
+                }
+            })
+            .catch(error => {
+                console.error('Error loading reactions:', error);
+            });
+    }
+
+    // Update UI with current reactions
+    function updateReactionUI() {
+        const mainBtn = document.getElementById('reactionMainBtn');
+        const reactionText = document.getElementById('reactionText');
+        const totalReactions = document.getElementById('reactionsCount');
+
+        // Calculate total reactions
+        const total = Object.values(reactionCounts).reduce((a, b) => a + b, 0);
+        totalReactions.textContent = total;
+
+        {% if current_user.is_authenticated %}
+        if (currentUserReaction) {
+            const reactionIcons = {
+                'stethoscope': 'fa-stethoscope',
+                'heartbeat': 'fa-heartbeat',
+                'pill': 'fa-pills',
+                'syringe': 'fa-syringe',
+                'tooth': 'fa-tooth',
+                'dna': 'fa-dna'
+            };
+
+            const reactionColors = {
+                'stethoscope': 'btn-primary',
+                'heartbeat': 'btn-danger',
+                'pill': 'btn-success',
+                'syringe': 'btn-info',
+                'tooth': 'btn-warning',
+                'dna': 'btn-dark'
+            };
+
+            // Update button
+            mainBtn.className = `btn ${reactionColors[currentUserReaction]} w-100 reaction-main-btn`;
+            mainBtn.innerHTML = `
+                <div class="d-flex align-items-center justify-content-center">
+                    <i class="fas ${reactionIcons[currentUserReaction]} me-2"></i>
+                    <span id="reactionText">${capitalizeFirst(currentUserReaction)}</span>
+                </div>
+            `;
+        } else {
+            // User hasn't reacted
+            mainBtn.className = 'btn btn-outline-primary w-100 reaction-main-btn';
+            mainBtn.innerHTML = `
+                <div class="d-flex align-items-center justify-content-center">
+                    <i class="fas fa-thumbs-up me-2"></i>
+                    <span id="reactionText">React</span>
+                </div>
+            `;
+        }
+        {% endif %}
+
+        // Update reaction breakdown
+        updateReactionBreakdown();
+    }
+
+    // Update reaction breakdown display
+    function updateReactionBreakdown() {
+        const breakdownContainer = document.querySelector('.reaction-breakdown');
+        let html = '';
+
+        // Sort reactions by count (descending)
+        const sortedReactions = Object.entries(reactionCounts)
+            .sort((a, b) => b[1] - a[1])
+            .filter(([_, count]) => count > 0);
+
+        if (sortedReactions.length > 0) {
+            html = '<div class="d-flex align-items-center flex-wrap gap-2">';
+            sortedReactions.forEach(([reaction, count]) => {
+                const reactionIcons = {
+                    'stethoscope': 'fa-stethoscope text-primary',
+                    'heartbeat': 'fa-heartbeat text-danger',
+                    'pill': 'fa-pills text-success',
+                    'syringe': 'fa-syringe text-info',
+                    'tooth': 'fa-tooth text-warning',
+                    'dna': 'fa-dna text-dark'
+                };
+
+                html += `
+                    <div class="reaction-item">
+                        <i class="fas ${reactionIcons[reaction]} me-1"></i>
+                        <span class="badge bg-light text-dark">${count}</span>
+                    </div>
+                `;
+            });
+            html += '</div>';
+        } else {
+            html = '<p class="text-muted small mb-0">No reactions yet. Be the first to react!</p>';
+        }
+
+        breakdownContainer.innerHTML = html;
+    }
+
+    // Show reaction picker
+    function showReactionPicker() {
+        {% if not current_user.is_authenticated %}
+        return; // Don't show picker if not logged in
+        {% endif %}
+
+        if (pickerTimeout) clearTimeout(pickerTimeout);
+        const picker = document.getElementById('reactionPicker');
+        picker.style.display = 'block';
+        picker.style.opacity = '0';
+
+        // Animate in
+        setTimeout(() => {
+            picker.style.opacity = '1';
+            picker.style.transform = 'translateY(-10px)';
+        }, 10);
+
+        pickerVisible = true;
+    }
+
+    // Hide reaction picker
+    function hideReactionPicker() {
+        if (!pickerVisible) return;
+
+        pickerTimeout = setTimeout(() => {
+            const picker = document.getElementById('reactionPicker');
+            picker.style.opacity = '0';
+            picker.style.transform = 'translateY(0)';
+
+            setTimeout(() => {
+                picker.style.display = 'none';
+                pickerVisible = false;
+            }, 300);
+        }, 300);
+    }
+
+    // Keep picker open when hovering over it
+    function keepPickerOpen() {
+        if (pickerTimeout) clearTimeout(pickerTimeout);
+    }
+
+    // Preview reaction on hover
+    function previewReaction(reactionType, label) {
+        const mainBtn = document.getElementById('reactionMainBtn');
+        const reactionText = document.getElementById('reactionText');
+
+        const reactionColors = {
+            'stethoscope': 'btn-primary',
+            'heartbeat': 'btn-danger',
+            'pill': 'btn-success',
+            'syringe': 'btn-info',
+            'tooth': 'btn-warning',
+            'dna': 'btn-dark'
+        };
+
+        // Preview the reaction
+        mainBtn.className = `btn ${reactionColors[reactionType]} w-100 reaction-main-btn`;
+        reactionText.textContent = label;
+    }
+
+    // Select a reaction
+    function selectReaction(reactionType) {
+        {% if not current_user.is_authenticated %}
+        window.location.href = "{{ url_for('auth.login') }}";
+        return;
+        {% endif %}
+
+        // If user already has this reaction, remove it
+        const action = (currentUserReaction === reactionType) ? 'remove' : reactionType;
+
+        fetch(`/post/{{ post.id }}/react/${action}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Update local data
+                reactionCounts = data.reaction_counts;
+                currentUserReaction = data.user_reaction;
+
+                // Update UI
+                updateReactionUI();
+
+                // Hide picker
+                hideReactionPicker();
+
+                // Show feedback
+                showReactionFeedback(reactionType, data.action);
+
+                // Create floating reaction emoji
+                if (data.action !== 'removed') {
+                    createFloatingReaction(reactionType);
+                }
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while reacting. Please try again.');
+        });
+    }
+
+    // Create floating reaction animation
+    function createFloatingReaction(reactionType) {
+        const reactionIcons = {
+            'stethoscope': 'fas fa-stethoscope text-primary',
+            'heartbeat': 'fas fa-heartbeat text-danger',
+            'pill': 'fas fa-pills text-success',
+            'syringe': 'fas fa-syringe text-info',
+            'tooth': 'fas fa-tooth text-warning',
+            'dna': 'fas fa-dna text-dark'
+        };
+
+        const floatDiv = document.createElement('div');
+        floatDiv.className = 'reaction-float';
+        floatDiv.innerHTML = `<i class="${reactionIcons[reactionType]} fa-2x"></i>`;
+
+        // Position near the reaction button
+        const mainBtn = document.getElementById('reactionMainBtn');
+        const rect = mainBtn.getBoundingClientRect();
+
+        floatDiv.style.left = (rect.left + rect.width / 2 - 20) + 'px';
+        floatDiv.style.top = (rect.top - 30) + 'px';
+        floatDiv.style.position = 'fixed';
+        floatDiv.style.zIndex = '10000';
+        floatDiv.style.pointerEvents = 'none';
+
+        document.body.appendChild(floatDiv);
+
+        // Remove after animation
+        setTimeout(() => {
+            floatDiv.remove();
+        }, 1000);
+    }
+
+    // Show feedback animation
+    function showReactionFeedback(reactionType, action) {
+        const mainBtn = document.getElementById('reactionMainBtn');
+
+        if (action === 'removed') {
+            // Bounce animation for removal
+            mainBtn.classList.add('animate__animated', 'animate__headShake');
+            setTimeout(() => {
+                mainBtn.classList.remove('animate__animated', 'animate__headShake');
+            }, 1000);
+        } else {
+            // Bounce animation for adding/updating
+            mainBtn.classList.add('animate__animated', 'animate__bounce');
+            setTimeout(() => {
+                mainBtn.classList.remove('animate__animated', 'animate__bounce');
+            }, 1000);
+        }
+    }
+
+    // Delete Post
+    function deletePost(postId) {
+        if (confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
+            fetch(`/post/${postId}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '/';
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while deleting the post.');
+            });
+        }
+    }
+
+    // Add Comment
+    function addComment(event, postId) {
+        event.preventDefault();
+
+        const content = document.getElementById('commentContent').value.trim();
+        if (!content) return;
+
+        const formData = new FormData();
+        formData.append('content', content);
+
+        fetch(`/post/${postId}/comment`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Clear the form
+                document.getElementById('commentContent').value = '';
+
+                // Add the new comment to the top
+                const commentsContainer = document.getElementById('commentsContainer');
+                const newComment = document.createElement('div');
+                newComment.className = 'card mb-3 comment-card';
+                newComment.id = `comment-${data.comment.id}`;
+                newComment.innerHTML = `
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <strong>${data.comment.author_name}</strong>
+                                <span class="text-muted small ms-2">
+                                    <i class="fas fa-clock me-1"></i>
+                                    ${data.comment.created_at}
+                                </span>
+                            </div>
+                            {% if current_user.is_authenticated %}
+                            <button class="btn btn-sm btn-outline-danger"
+                                    onclick="deleteComment(${data.comment.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                        <p class="mb-0" style="white-space: pre-line;">${data.comment.content}</p>
+                    </div>
+                `;
+
+                commentsContainer.prepend(newComment);
+
+                // Update comment count
+                const commentCountBadge = document.getElementById('commentsCount');
+                if (commentCountBadge) {
+                    commentCountBadge.textContent = parseInt(commentCountBadge.textContent) + 1;
+                }
+
+                // Remove "no comments" message if it exists
+                const noCommentsMsg = commentsContainer.querySelector('.text-center');
+                if (noCommentsMsg) {
+                    noCommentsMsg.remove();
+                }
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while posting comment.');
+        });
+    }
+
+    // Delete Comment
+    function deleteComment(commentId) {
+        if (confirm('Are you sure you want to delete this comment?')) {
+            fetch(`/comment/${commentId}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Remove the comment from the DOM
+                    const commentElement = document.getElementById(`comment-${commentId}`);
+                    if (commentElement) {
+                        commentElement.remove();
+                    }
+
+                    // Update comment count
+                    const commentCountBadge = document.getElementById('commentsCount');
+                    if (commentCountBadge) {
+                        const newCount = Math.max(0, parseInt(commentCountBadge.textContent) - 1);
+                        commentCountBadge.textContent = newCount;
+                    }
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while deleting comment.');
+            });
+        }
+    }
+
+    // Helper function
+    function capitalizeFirst(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+</script>
+
+<!-- Add Animate.css for animations -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
+<!-- CSS Styles for Reaction System -->
+<style>
+    /* Reaction System Styles */
+    .reaction-main-btn {
+        position: relative;
+        transition: all 0.3s ease;
+        height: 40px;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+
+    .reaction-main-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .reaction-picker {
+        display: none;
+        position: absolute;
+        bottom: 100%;
+        left: 0;
+        margin-bottom: 15px;
+        z-index: 1000;
+        opacity: 0;
+        transform: translateY(0);
+        transition: all 0.3s ease;
+    }
+
+    .reaction-picker-content {
+        background: white;
+        border-radius: 50px;
+        padding: 10px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        border: 1px solid #e9ecef;
+    }
+
+    .reaction-options {
+        display: flex;
+        gap: 5px;
+    }
+
+    .reaction-option {
+        width: 45px;
+        height: 45px;
+        border: none;
+        background: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+    .reaction-option:hover {
+        transform: scale(1.2) translateY(-5px);
+        background: #f8f9fa;
+    }
+
+    .reaction-option i {
+        font-size: 1.5rem;
+        transition: all 0.2s ease;
+    }
+
+    .reaction-option:hover i {
+        transform: scale(1.3);
+    }
+
+    .reaction-label {
+        position: absolute;
+        bottom: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #333;
+        color: white;
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        pointer-events: none;
+    }
+
+    .reaction-option:hover .reaction-label {
+        opacity: 1;
+    }
+
+    /* Reaction breakdown styles */
+    .reaction-item {
+        display: inline-flex;
+        align-items: center;
+        background: #f8f9fa;
+        padding: 5px 10px;
+        border-radius: 20px;
+        border: 1px solid #e9ecef;
+    }
+
+    .reaction-item i {
+        font-size: 1.2rem;
+    }
+
+    /* Animation for floating reactions */
+    @keyframes floatUp {
+        0% {
+            opacity: 0;
+            transform: translateY(0) scale(0.5);
+        }
+        50% {
+            opacity: 1;
+            transform: translateY(-20px) scale(1.2);
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(-40px) scale(1);
+        }
+    }
+
+    .reaction-float {
+        animation: floatUp 1s ease-out forwards;
+    }
+
+    /* General styles */
+    .comment-card {
+        transition: all 0.3s ease;
+    }
+
+    .comment-card:hover {
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .post-content {
+        font-size: 1.1rem;
+        line-height: 1.8;
+    }
+
+    .post-content p {
+        margin-bottom: 1.5rem;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .reaction-options {
+            gap: 3px;
+        }
+
+        .reaction-option {
+            width: 40px;
+            height: 40px;
+        }
+
+        .reaction-option i {
+            font-size: 1.3rem;
+        }
+
+        .reaction-label {
+            font-size: 0.6rem;
+            padding: 2px 6px;
+            bottom: -25px;
+        }
+    }
+</style>
+{% endblock %}

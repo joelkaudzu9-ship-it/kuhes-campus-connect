@@ -1,0 +1,470 @@
+{% extends "base.html" %}
+
+{% block title %}Events - KUHES Campus Connect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Hero Header -->
+    <div class="kuhes-hero rounded-3 mb-5">
+        <div class="kuhes-hero-content text-center">
+            <h1 class="kuhes-hero-title mb-3">
+                <i class="fas fa-calendar-alt me-3"></i>KUHES Events Calendar
+            </h1>
+            <p class="kuhes-hero-subtitle mb-4">
+                Stay updated with campus events, workshops, seminars, and social activities
+            </p>
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('events.create_event') }}" class="btn btn-kuhes btn-lg">
+                    <i class="fas fa-plus-circle me-2"></i> Create New Event
+                </a>
+                <a href="{{ url_for('events.my_events') }}" class="btn btn-kuhes-outline btn-lg">
+                    <i class="fas fa-calendar-check me-2"></i> My Events
+                </a>
+                {% if current_user.can_approve_events() %}
+                <a href="{{ url_for('events.pending_events') }}" class="btn btn-warning btn-lg">
+                    <i class="fas fa-clock me-2"></i> Pending Approvals
+                </a>
+                {% endif %}
+                {% else %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-kuhes btn-lg">
+                    <i class="fas fa-sign-in-alt me-2"></i> Login to Create Events
+                </a>
+                {% endif %}
+                <a href="{{ url_for('events.events_calendar') }}" class="btn btn-info btn-lg">
+                    <i class="fas fa-calendar me-2"></i> Calendar View
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="kuhes-card mb-5">
+        <div class="kuhes-card-header">
+            <h4 class="mb-0"><i class="fas fa-filter me-2"></i> Filter Events</h4>
+        </div>
+        <div class="kuhes-card-body">
+            <form method="GET" class="row g-4">
+                <!-- Event Type -->
+                <div class="col-md-4">
+                    <label class="kuhes-form-label">Event Type</label>
+                    <select name="type" class="form-select kuhes-form-control">
+                        {% set type_options = [
+                            ('all', 'All Types'),
+                            ('academic', 'Academic'),
+                            ('sports', 'Sports'),
+                            ('cultural', 'Cultural'),
+                            ('religious', 'Religious'),
+                            ('social', 'Social'),
+                            ('workshop', 'Workshop'),
+                            ('seminar', 'Seminar'),
+                            ('conference', 'Conference'),
+                            ('career', 'Career Fair')
+                        ] %}
+
+                        {% for value, label in type_options %}
+                        <option value="{{ value }}"
+                                {{ 'selected' if filter_type == value else '' }}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Category -->
+                <div class="col-md-4">
+                    <label class="kuhes-form-label">Category</label>
+                    <select name="category" class="form-select kuhes-form-control">
+                        {% set category_options = [
+                            ('all', 'All Categories'),
+                            ('workshop', 'Workshop'),
+                            ('seminar', 'Seminar'),
+                            ('competition', 'Competition'),
+                            ('celebration', 'Celebration'),
+                            ('conference', 'Conference'),
+                            ('exhibition', 'Exhibition'),
+                            ('lecture', 'Lecture'),
+                            ('meeting', 'Meeting')
+                        ] %}
+
+                        {% for value, label in category_options %}
+                        <option value="{{ value }}"
+                                {{ 'selected' if filter_category == value else '' }}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Date Range -->
+                <div class="col-md-4">
+                    <label class="kuhes-form-label">Date Range</label>
+                    <select name="date" class="form-select kuhes-form-control">
+                        {% set date_options = [
+                            ('upcoming', 'Upcoming Events'),
+                            ('today', 'Today'),
+                            ('week', 'This Week'),
+                            ('month', 'This Month'),
+                            ('past', 'Past Events'),
+                            ('all', 'All Events')
+                        ] %}
+
+                        {% for value, label in date_options %}
+                        <option value="{{ value }}"
+                                {{ 'selected' if filter_date == value else '' }}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="col-12">
+                    <div class="d-flex flex-wrap gap-3">
+                        <button type="submit" class="btn btn-kuhes">
+                            <i class="fas fa-search me-2"></i> Apply Filters
+                        </button>
+                        <a href="{{ url_for('events.events_home') }}" class="btn btn-kuhes-outline">
+                            <i class="fas fa-times me-2"></i> Clear Filters
+                        </a>
+                        <div class="ms-auto">
+                            <span class="badge-kuhes">
+                                <i class="fas fa-calendar-check me-1"></i> {{ events|length }} Events
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Events Grid -->
+    {% if events %}
+    <div class="row">
+        {% for event in events %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="kuhes-card h-100">
+                <!-- Event Status Badge -->
+                <div class="position-absolute top-0 end-0 m-3">
+                    {% if event.status == 'approved' %}
+                    <span class="badge bg-success">
+                        <i class="fas fa-check-circle me-1"></i> Approved
+                    </span>
+                    {% elif event.status == 'pending' %}
+                    <span class="badge bg-warning">
+                        <i class="fas fa-clock me-1"></i> Pending
+                    </span>
+                    {% elif event.status == 'rejected' %}
+                    <span class="badge bg-danger">
+                        <i class="fas fa-times-circle me-1"></i> Rejected
+                    </span>
+                    {% endif %}
+                </div>
+
+                <!-- Event Date -->
+                <div class="p-3 text-center" style="background: linear-gradient(135deg, var(--kuhes-primary), var(--kuhes-dark-blue));">
+                    <div class="text-white">
+                        <div class="display-6 fw-bold">{{ event.start_date.strftime('%d') }}</div>
+                        <div class="text-uppercase">{{ event.start_date.strftime('%b') }}</div>
+                        <div class="small">{{ event.start_date.strftime('%Y') }}</div>
+                    </div>
+                </div>
+
+                <!-- Event Content -->
+                <div class="kuhes-card-body">
+                    <h5 class="fw-bold mb-2 text-kuhes-primary">{{ event.title }}</h5>
+
+                    <div class="mb-3">
+                        <span class="badge-kuhes-outline me-2">
+                            <i class="fas fa-tag me-1"></i> {{ event.event_type|title }}
+                        </span>
+                        <span class="badge-kuhes-outline">
+                            <i class="fas fa-folder me-1"></i> {{ event.category|title }}
+                        </span>
+                    </div>
+
+                    <p class="text-muted mb-3">
+                        <i class="fas fa-map-marker-alt me-2 text-kuhes-primary"></i>
+                        {{ event.venue }}
+                    </p>
+
+                    <p class="mb-3">
+                        {{ event.description[:120] }}{% if event.description|length > 120 %}...{% endif %}
+                    </p>
+
+                    <div class="mb-3">
+                        <small class="text-muted">
+                            <i class="fas fa-clock me-1"></i>
+                            {{ event.start_date.strftime('%I:%M %p') }}
+                            {% if event.end_date %}
+                            - {{ event.end_date.strftime('%I:%M %p') }}
+                            {% endif %}
+                        </small>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="fas fa-user me-1"></i>
+                            {{ event.organizer_name or event.organizer.username }}
+                        </small>
+                        <a href="{{ url_for('events.view_event', event_id=event.id) }}"
+                           class="btn btn-sm btn-kuhes">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Event Footer -->
+                <div class="kuhes-card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            Created {{ event.created_at.strftime('%b %d, %Y') }}
+                        </small>
+                        {% if current_user.is_authenticated and (current_user.id == event.user_id or current_user.can_approve_events()) %}
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                    type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                {% if current_user.can_approve_events() and event.status == 'pending' %}
+                                <li>
+                                    <a class="dropdown-item text-success" href="#"
+                                       onclick="approveEvent({{ event.id }})">
+                                        <i class="fas fa-check me-2"></i> Approve
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="#"
+                                       onclick="rejectEvent({{ event.id }})">
+                                        <i class="fas fa-times me-2"></i> Reject
+                                    </a>
+                                </li>
+                                {% endif %}
+                                {% if current_user.id == event.user_id or current_user.is_admin() %}
+                                <li>
+                                    <a class="dropdown-item text-danger" href="#"
+                                       onclick="deleteEvent({{ event.id }})">
+                                        <i class="fas fa-trash me-2"></i> Delete
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- No Events Message -->
+    {% else %}
+    <div class="kuhes-card text-center py-5">
+        <div class="card-body">
+            <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
+            <h4 class="text-muted">No Events Found</h4>
+            <p class="text-muted mb-4">
+                {% if filter_type != 'all' or filter_category != 'all' or filter_date != 'upcoming' %}
+                No events match your filter criteria. Try adjusting your filters.
+                {% else %}
+                No events scheduled yet. Be the first to create one!
+                {% endif %}
+            </p>
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('events.create_event') }}" class="btn btn-kuhes btn-lg">
+                <i class="fas fa-plus-circle me-2"></i> Create First Event
+            </a>
+            {% else %}
+            <a href="{{ url_for('auth.login') }}" class="btn btn-kuhes btn-lg">
+                <i class="fas fa-sign-in-alt me-2"></i> Login to Create Events
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Stats -->
+    <div class="row mt-5">
+        <div class="col-md-3 col-6 mb-4">
+            <div class="kuhes-card text-center py-4">
+                <div class="kuhes-feature-icon mb-3">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <h3 class="fw-bold text-kuhes-primary">{{ events|length }}</h3>
+                <p class="text-muted mb-0">Total Events</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-4">
+            <div class="kuhes-card text-center py-4">
+                <div class="kuhes-feature-icon mb-3">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h3 class="fw-bold text-warning">{{ upcoming_count }}</h3>
+                <p class="text-muted mb-0">Upcoming</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-4">
+            <div class="kuhes-card text-center py-4">
+                <div class="kuhes-feature-icon mb-3">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h3 class="fw-bold text-success">{{ approved_count }}</h3>
+                <p class="text-muted mb-0">Approved</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-4">
+            <div class="kuhes-card text-center py-4">
+                <div class="kuhes-feature-icon mb-3">
+                    <i class="fas fa-hourglass-half"></i>
+                </div>
+                <h3 class="fw-bold text-info">{{ pending_count }}</h3>
+                <p class="text-muted mb-0">Pending</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Approve Event
+    function approveEvent(eventId) {
+        if (confirm('Are you sure you want to approve this event?')) {
+            fetch(`/events/approve/${eventId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while approving the event.');
+            });
+        }
+    }
+
+    // Reject Event
+    function rejectEvent(eventId) {
+        const reason = prompt('Please provide a reason for rejection:');
+        if (reason === null) return;
+
+        if (reason.trim() === '') {
+            alert('Rejection reason is required.');
+            return;
+        }
+
+        fetch(`/events/reject/${eventId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ reason: reason.trim() })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while rejecting the event.');
+        });
+    }
+
+    // Delete Event
+    function deleteEvent(eventId) {
+        if (confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
+            fetch(`/events/delete/${eventId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while deleting the event.');
+            });
+        }
+    }
+
+    // Add animation to event cards
+    document.addEventListener('DOMContentLoaded', function() {
+        const eventCards = document.querySelectorAll('.kuhes-card');
+        eventCards.forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.1}s`;
+        });
+    });
+</script>
+
+<style>
+    .kuhes-card .position-absolute {
+        z-index: 1;
+    }
+
+    .kuhes-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 86, 179, 0.2);
+    }
+
+    .display-6 {
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+
+    .dropdown-toggle::after {
+        display: none;
+    }
+
+    .dropdown-menu {
+        border-radius: 10px;
+        border: 1px solid rgba(0, 86, 179, 0.1);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .dropdown-item {
+        padding: 10px 15px;
+        border-radius: 5px;
+        margin: 2px 5px;
+        transition: all 0.2s;
+    }
+
+    .dropdown-item:hover {
+        background-color: rgba(0, 86, 179, 0.1);
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .kuhes-card {
+        animation: fadeInUp 0.5s ease forwards;
+        opacity: 0;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}Create Post - KUHES Campus Connect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-lg">
+                <div class="card-header bg-primary text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0"><i class="fas fa-edit me-2"></i> Create New Post</h4>
+                        <a href="{{ url_for('main.home') }}" class="btn btn-light btn-sm">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('main.create_post') }}" id="postForm">
+                        <!-- Title -->
+                        <div class="mb-4">
+                            <label for="title" class="form-label fw-bold">
+                                <i class="fas fa-heading me-1"></i> Post Title
+                            </label>
+                            <input type="text" class="form-control form-control-lg"
+                                   id="title" name="title"
+                                   placeholder="Enter a descriptive title for your post"
+                                   required>
+                            <div class="form-text">Make it clear and engaging</div>
+                        </div>
+
+                        <!-- Category -->
+                        <div class="mb-4">
+                            <label for="category" class="form-label fw-bold">
+                                <i class="fas fa-tag me-1"></i> Category
+                            </label>
+                            <select class="form-select form-select-lg" id="category" name="category" required>
+                                <option value="" selected disabled>Select a category</option>
+                                <option value="news">📰 Campus News</option>
+                                <option value="announcement">📢 Announcement</option>
+                                <option value="event">📅 Event</option>
+                                <option value="question">❓ Question</option>
+                                <option value="discussion">💬 Discussion</option>
+                                <option value="resource">📚 Resource Share</option>
+                                <option value="academic">🎓 Academic</option>
+                                <option value="sports">⚽ Sports</option>
+                                <option value="religious">🙏 Religious</option>
+                                <option value="social">👥 Social</option>
+                            </select>
+                            <div class="form-text">Choose the most relevant category</div>
+                        </div>
+
+                        <!-- Content -->
+                        <div class="mb-4">
+                            <label for="content" class="form-label fw-bold">
+                                <i class="fas fa-file-alt me-1"></i> Post Content
+                            </label>
+                            <textarea class="form-control" id="content" name="content"
+                                      rows="8"
+                                      placeholder="Share your thoughts, announcements, or questions here..."
+                                      required></textarea>
+                            <div class="form-text">
+                                <i class="fas fa-lightbulb me-1"></i>
+                                Tip: Be clear and specific. You can include details like dates, times, locations.
+                            </div>
+                        </div>
+
+                        <!-- Post Guidelines -->
+                        <div class="alert alert-info mb-4">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-info-circle me-2"></i>Posting Guidelines
+                            </h6>
+                            <ul class="mb-0 small">
+                                <li>Be respectful and professional</li>
+                                <li>Use appropriate language for an academic environment</li>
+                                <li>Include relevant details (dates, locations, contacts)</li>
+                                <li>No spam or promotional content</li>
+                                <li>Posts will be visible to all KUHES community members</li>
+                            </ul>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('main.home') }}" class="btn btn-outline-secondary btn-lg px-4">
+                                <i class="fas fa-times me-2"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg px-5" id="submitBtn">
+                                <i class="fas fa-paper-plane me-2"></i> Publish Post
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Preview Card -->
+                <div class="card-footer bg-light">
+                    <h6 class="fw-bold mb-3">
+                        <i class="fas fa-eye me-2"></i> Preview
+                    </h6>
+                    <div class="card preview-card">
+                        <div class="card-body">
+                            <h5 id="previewTitle" class="text-muted fst-italic">Your post title will appear here</h5>
+                            <p id="previewContent" class="text-muted fst-italic mb-0">Your post content will appear here...</p>
+                            <div class="mt-3">
+                                <span id="previewCategory" class="badge bg-secondary">Category</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for live preview and form handling -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Live preview
+        const titleInput = document.getElementById('title');
+        const contentInput = document.getElementById('content');
+        const categorySelect = document.getElementById('category');
+
+        const previewTitle = document.getElementById('previewTitle');
+        const previewContent = document.getElementById('previewContent');
+        const previewCategory = document.getElementById('previewCategory');
+
+        function updatePreview() {
+            // Update title
+            if (titleInput.value.trim()) {
+                previewTitle.textContent = titleInput.value;
+                previewTitle.classList.remove('text-muted', 'fst-italic');
+            } else {
+                previewTitle.textContent = 'Your post title will appear here';
+                previewTitle.classList.add('text-muted', 'fst-italic');
+            }
+
+            // Update content
+            if (contentInput.value.trim()) {
+                previewContent.textContent = contentInput.value.substring(0, 150);
+                if (contentInput.value.length > 150) {
+                    previewContent.textContent += '...';
+                }
+                previewContent.classList.remove('text-muted', 'fst-italic');
+            } else {
+                previewContent.textContent = 'Your post content will appear here...';
+                previewContent.classList.add('text-muted', 'fst-italic');
+            }
+
+            // Update category
+            if (categorySelect.value) {
+                const categoryText = categorySelect.options[categorySelect.selectedIndex].text;
+                previewCategory.textContent = categoryText.replace(/[📰📢📅❓💬📚🎓⚽🙏👥]/g, '').trim();
+
+                // Update badge color based on category
+                const categoryColors = {
+                    'news': 'bg-info',
+                    'announcement': 'bg-warning',
+                    'event': 'bg-success',
+                    'question': 'bg-primary',
+                    'discussion': 'bg-secondary',
+                    'resource': 'bg-purple',
+                    'academic': 'bg-dark',
+                    'sports': 'bg-orange',
+                    'religious': 'bg-indigo',
+                    'social': 'bg-teal'
+                };
+
+                // Reset all classes
+                previewCategory.className = 'badge';
+                // Add base class and color class
+                previewCategory.classList.add('badge');
+                if (categoryColors[categorySelect.value]) {
+                    previewCategory.classList.add(categoryColors[categorySelect.value]);
+                } else {
+                    previewCategory.classList.add('bg-secondary');
+                }
+            } else {
+                previewCategory.textContent = 'Category';
+                previewCategory.className = 'badge bg-secondary';
+            }
+        }
+
+        // Add event listeners for live preview
+        titleInput.addEventListener('input', updatePreview);
+        contentInput.addEventListener('input', updatePreview);
+        categorySelect.addEventListener('change', updatePreview);
+
+        // Form submission handling
+        const postForm = document.getElementById('postForm');
+        const submitBtn = document.getElementById('submitBtn');
+
+        postForm.addEventListener('submit', function(e) {
+            // Basic validation
+            const title = titleInput.value.trim();
+            const content = contentInput.value.trim();
+            const category = categorySelect.value;
+
+            if (!title || !content || !category) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+                return;
+            }
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Publishing...';
+
+            // Form will submit normally
+        });
+
+        // Character counter for content
+        contentInput.addEventListener('input', function() {
+            const charCount = this.value.length;
+            const counter = document.getElementById('charCounter') || (function() {
+                const div = document.createElement('div');
+                div.id = 'charCounter';
+                div.className = 'form-text text-end mt-1';
+                contentInput.parentNode.appendChild(div);
+                return div;
+            })();
+
+            counter.textContent = `${charCount} characters`;
+
+            if (charCount > 5000) {
+                counter.classList.add('text-danger');
+            } else if (charCount > 3000) {
+                counter.classList.add('text-warning');
+            } else {
+                counter.classList.remove('text-danger', 'text-warning');
+            }
+        });
+
+        // Trigger input event to show initial counter
+        contentInput.dispatchEvent(new Event('input'));
+    });
+</script>
+
+<!-- Custom styles for preview -->
+<style>
+    .preview-card {
+        border: 2px dashed #dee2e6;
+        background-color: #f8f9fa;
+    }
+
+    .bg-purple { background-color: #6f42c1 !important; }
+    .bg-orange { background-color: #fd7e14 !important; }
+    .bg-indigo { background-color: #6610f2 !important; }
+    .bg-teal { background-color: #20c997 !important; }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #0056b3;
+        box-shadow: 0 0 0 0.25rem rgba(0, 86, 179, 0.25);
+    }
+
+    textarea {
+        resize: vertical;
+        min-height: 200px;
+    }
+
+    .spinner-border {
+        vertical-align: middle;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,400 @@
+{% extends "base.html" %}
+
+{% block title %}Create Event - KUHES Campus Connect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="row mb-5">
+        <div class="col-md-8">
+            <h1 class="display-5 fw-bold text-kuhes-primary mb-3">
+                <i class="fas fa-plus-circle me-3"></i>Create New Event
+            </h1>
+            <p class="lead text-muted">
+                Organize campus events, workshops, seminars, or social activities
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('events.events_home') }}" class="btn btn-kuhes-outline">
+                <i class="fas fa-arrow-left me-2"></i> Back to Events
+            </a>
+        </div>
+    </div>
+
+    <!-- Create Event Form -->
+    <div class="kuhes-card">
+        <div class="kuhes-card-header">
+            <h4 class="mb-0"><i class="fas fa-edit me-2"></i> Event Details</h4>
+        </div>
+        <div class="kuhes-card-body">
+            <form method="POST" action="{{ url_for('events.create_event') }}" id="eventForm">
+                <!-- Basic Information -->
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <label class="kuhes-form-label">Event Title *</label>
+                            <input type="text" class="form-control kuhes-form-control"
+                                   name="title" required
+                                   placeholder="Enter event title (e.g., Health Sciences Symposium 2024)">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="kuhes-form-label">Event Type *</label>
+                            <select class="form-select kuhes-form-control" name="event_type" required>
+                                <option value="" selected disabled>Select Type</option>
+                                <option value="academic">Academic</option>
+                                <option value="sports">Sports</option>
+                                <option value="cultural">Cultural</option>
+                                <option value="religious">Religious</option>
+                                <option value="social">Social</option>
+                                <option value="workshop">Workshop</option>
+                                <option value="seminar">Seminar</option>
+                                <option value="conference">Conference</option>
+                                <option value="career">Career Fair</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category and Venue -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="kuhes-form-label">Category *</label>
+                            <select class="form-select kuhes-form-control" name="category" required>
+                                <option value="" selected disabled>Select Category</option>
+                                <option value="workshop">Workshop</option>
+                                <option value="seminar">Seminar</option>
+                                <option value="competition">Competition</option>
+                                <option value="celebration">Celebration</option>
+                                <option value="conference">Conference</option>
+                                <option value="exhibition">Exhibition</option>
+                                <option value="lecture">Lecture</option>
+                                <option value="meeting">Meeting</option>
+                                <option value="training">Training</option>
+                                <option value="networking">Networking</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="kuhes-form-label">Venue *</label>
+                            <input type="text" class="form-control kuhes-form-control"
+                                   name="venue" required
+                                   placeholder="e.g., Main Auditorium, Student Union Building">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Date and Time -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="kuhes-form-label">Start Date *</label>
+                                <input type="date" class="form-control kuhes-form-control"
+                                       name="start_date" required
+                                       min="{{ now.strftime('%Y-%m-%d') }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="kuhes-form-label">Start Time *</label>
+                                <input type="time" class="form-control kuhes-form-control"
+                                       name="start_time" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="kuhes-form-label">End Date</label>
+                                <input type="date" class="form-control kuhes-form-control"
+                                       name="end_date">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="kuhes-form-label">End Time</label>
+                                <input type="time" class="form-control kuhes-form-control"
+                                       name="end_time">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="mb-4">
+                    <label class="kuhes-form-label">Event Description *</label>
+                    <textarea class="form-control kuhes-form-control" name="description"
+                              rows="5" required
+                              placeholder="Describe your event in detail. Include objectives, agenda, target audience, etc."></textarea>
+                    <div class="form-text">
+                        Be descriptive. Include all important details attendees should know.
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="kuhes-form-label">Organizer Name</label>
+                            <input type="text" class="form-control kuhes-form-control"
+                                   name="organizer_name"
+                                   value="{{ current_user.get_full_name() if current_user.is_authenticated else '' }}"
+                                   placeholder="Your name or organization">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="kuhes-form-label">Contact Email</label>
+                            <input type="email" class="form-control kuhes-form-control"
+                                   name="contact_email"
+                                   value="{{ current_user.email if current_user.is_authenticated else '' }}"
+                                   placeholder="email@kuhes.edu.mw">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="kuhes-form-label">Contact Phone</label>
+                            <input type="text" class="form-control kuhes-form-control"
+                                   name="contact_phone"
+                                   placeholder="+265 xxx xxx xxx">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Event Guidelines -->
+                <div class="kuhes-alert kuhes-alert-warning mb-4">
+                    <div class="d-flex">
+                        <i class="fas fa-info-circle fa-2x me-3 text-warning"></i>
+                        <div>
+                            <h5 class="fw-bold mb-2">Event Submission Guidelines</h5>
+                            <ul class="mb-0">
+                                <li>All events must be reviewed and approved by campus leadership</li>
+                                <li>Provide accurate and complete information</li>
+                                <li>Events should align with KUHES values and mission</li>
+                                <li>Allow at least 24 hours for approval processing</li>
+                                <li>Contact information must be valid and monitored</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('events.events_home') }}" class="btn btn-kuhes-outline">
+                        <i class="fas fa-times me-2"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-kuhes" id="submitBtn">
+                        <i class="fas fa-paper-plane me-2"></i> Submit Event for Approval
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Preview Card -->
+    <div class="kuhes-card mt-4">
+        <div class="kuhes-card-header">
+            <h4 class="mb-0"><i class="fas fa-eye me-2"></i> Event Preview</h4>
+        </div>
+        <div class="kuhes-card-body">
+            <div class="row">
+                <div class="col-md-2 text-center">
+                    <div class="bg-kuhes-primary text-white p-3 rounded">
+                        <div id="previewDate" class="display-6 fw-bold">DD</div>
+                        <div id="previewMonth" class="text-uppercase">MMM</div>
+                        <div id="previewYear" class="small">YYYY</div>
+                    </div>
+                </div>
+                <div class="col-md-10">
+                    <h5 id="previewTitle" class="fw-bold text-kuhes-primary mb-2">Event Title</h5>
+                    <div class="mb-3">
+                        <span id="previewType" class="badge-kuhes-outline me-2">Type</span>
+                        <span id="previewCategory" class="badge-kuhes-outline">Category</span>
+                    </div>
+                    <p id="previewVenue" class="text-muted mb-2">
+                        <i class="fas fa-map-marker-alt me-1"></i> Venue
+                    </p>
+                    <p id="previewDescription" class="mb-0">Event description will appear here...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('eventForm');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // Preview elements
+        const previewTitle = document.getElementById('previewTitle');
+        const previewType = document.getElementById('previewType');
+        const previewCategory = document.getElementById('previewCategory');
+        const previewVenue = document.getElementById('previewVenue');
+        const previewDescription = document.getElementById('previewDescription');
+        const previewDate = document.getElementById('previewDate');
+        const previewMonth = document.getElementById('previewMonth');
+        const previewYear = document.getElementById('previewYear');
+
+        // Form elements
+        const titleInput = form.querySelector('input[name="title"]');
+        const typeSelect = form.querySelector('select[name="event_type"]');
+        const categorySelect = form.querySelector('select[name="category"]');
+        const venueInput = form.querySelector('input[name="venue"]');
+        const descriptionInput = form.querySelector('textarea[name="description"]');
+        const startDateInput = form.querySelector('input[name="start_date"]');
+
+        // Update preview function
+        function updatePreview() {
+            // Title
+            if (titleInput.value.trim()) {
+                previewTitle.textContent = titleInput.value;
+            } else {
+                previewTitle.textContent = 'Event Title';
+            }
+
+            // Type
+            if (typeSelect.value) {
+                previewType.textContent = typeSelect.options[typeSelect.selectedIndex].text;
+                previewType.style.display = 'inline-block';
+            } else {
+                previewType.style.display = 'none';
+            }
+
+            // Category
+            if (categorySelect.value) {
+                previewCategory.textContent = categorySelect.options[categorySelect.selectedIndex].text;
+                previewCategory.style.display = 'inline-block';
+            } else {
+                previewCategory.style.display = 'none';
+            }
+
+            // Venue
+            if (venueInput.value.trim()) {
+                previewVenue.innerHTML = `<i class="fas fa-map-marker-alt me-1"></i> ${venueInput.value}`;
+            } else {
+                previewVenue.innerHTML = '<i class="fas fa-map-marker-alt me-1"></i> Venue';
+            }
+
+            // Description
+            if (descriptionInput.value.trim()) {
+                const desc = descriptionInput.value.substring(0, 150);
+                previewDescription.textContent = desc + (descriptionInput.value.length > 150 ? '...' : '');
+            } else {
+                previewDescription.textContent = 'Event description will appear here...';
+            }
+
+            // Date
+            if (startDateInput.value) {
+                const date = new Date(startDateInput.value);
+                previewDate.textContent = date.getDate().toString().padStart(2, '0');
+                previewMonth.textContent = date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+                previewYear.textContent = date.getFullYear();
+            }
+        }
+
+        // Add event listeners
+        titleInput.addEventListener('input', updatePreview);
+        typeSelect.addEventListener('change', updatePreview);
+        categorySelect.addEventListener('change', updatePreview);
+        venueInput.addEventListener('input', updatePreview);
+        descriptionInput.addEventListener('input', updatePreview);
+        startDateInput.addEventListener('change', updatePreview);
+
+        // Initial preview update
+        updatePreview();
+
+        // Form submission
+        form.addEventListener('submit', function(e) {
+            // Basic validation
+            const title = titleInput.value.trim();
+            const type = typeSelect.value;
+            const category = categorySelect.value;
+            const venue = venueInput.value.trim();
+            const description = descriptionInput.value.trim();
+            const startDate = startDateInput.value;
+            const startTime = form.querySelector('input[name="start_time"]').value;
+
+            if (!title || !type || !category || !venue || !description || !startDate || !startTime) {
+                e.preventDefault();
+                alert('Please fill in all required fields (marked with *).');
+                return;
+            }
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="kuhes-spinner"></span> Submitting...';
+        });
+
+        // Set min date to today
+        const today = new Date().toISOString().split('T')[0];
+        startDateInput.min = today;
+
+        // Set default time to next hour
+        const now = new Date();
+        const nextHour = new Date(now.getTime() + 60 * 60 * 1000);
+        const timeString = nextHour.toTimeString().slice(0, 5);
+        form.querySelector('input[name="start_time"]').value = timeString;
+
+        // Character counter for description
+        const charCounter = document.createElement('div');
+        charCounter.className = 'form-text text-end mt-1';
+        descriptionInput.parentNode.appendChild(charCounter);
+
+        descriptionInput.addEventListener('input', function() {
+            const count = this.value.length;
+            charCounter.textContent = `${count} characters`;
+
+            if (count > 2000) {
+                charCounter.classList.add('text-danger');
+            } else if (count > 1500) {
+                charCounter.classList.add('text-warning');
+            } else {
+                charCounter.classList.remove('text-danger', 'text-warning');
+            }
+        });
+
+        // Trigger initial count
+        descriptionInput.dispatchEvent(new Event('input'));
+    });
+</script>
+
+<style>
+    .form-control:focus, .form-select:focus {
+        border-color: var(--kuhes-primary);
+        box-shadow: 0 0 0 0.25rem rgba(0, 86, 179, 0.25);
+    }
+
+    textarea {
+        resize: vertical;
+        min-height: 150px;
+    }
+
+    .preview-card {
+        border: 2px dashed #dee2e6;
+        background-color: #f8f9fa;
+    }
+
+    .display-6 {
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+
+    .kuhes-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s linear infinite;
+        margin-right: 10px;
+        vertical-align: middle;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,137 @@
+<div class="kuhes-card h-100">
+    <!-- Event Status Badge -->
+    <div class="position-absolute top-0 end-0 m-3">
+        {% if event.status == 'approved' %}
+        <span class="badge bg-success">
+            <i class="fas fa-check-circle me-1"></i> Approved
+        </span>
+        {% elif event.status == 'pending' %}
+        <span class="badge bg-warning">
+            <i class="fas fa-clock me-1"></i> Pending
+        </span>
+        {% elif event.status == 'rejected' %}
+        <span class="badge bg-danger">
+            <i class="fas fa-times-circle me-1"></i> Rejected
+            {% if event.rejection_reason %}
+            <i class="fas fa-info-circle ms-1"
+               data-bs-toggle="tooltip"
+               title="Reason: {{ event.rejection_reason }}"></i>
+            {% endif %}
+        </span>
+        {% endif %}
+    </div>
+
+    <!-- Event Date -->
+    <div class="p-3 text-center" style="background: linear-gradient(135deg, var(--kuhes-primary), var(--kuhes-dark-blue));">
+        <div class="text-white">
+            <div class="display-6 fw-bold">{{ event.start_date.strftime('%d') }}</div>
+            <div class="text-uppercase">{{ event.start_date.strftime('%b') }}</div>
+            <div class="small">{{ event.start_date.strftime('%Y') }}</div>
+        </div>
+    </div>
+
+    <!-- Event Content -->
+    <div class="kuhes-card-body">
+        <h5 class="fw-bold mb-2 text-kuhes-primary">{{ event.title }}</h5>
+
+        <div class="mb-3">
+            <span class="badge-kuhes-outline me-2">
+                <i class="fas fa-tag me-1"></i> {{ event.event_type|title }}
+            </span>
+            <span class="badge-kuhes-outline">
+                <i class="fas fa-folder me-1"></i> {{ event.category|title }}
+            </span>
+        </div>
+
+        <p class="text-muted mb-3">
+            <i class="fas fa-map-marker-alt me-2 text-kuhes-primary"></i>
+            {{ event.venue }}
+        </p>
+
+        <p class="mb-3">
+            {{ event.description[:100] }}{% if event.description|length > 100 %}...{% endif %}
+        </p>
+
+        <div class="mb-3">
+            <small class="text-muted">
+                <i class="fas fa-clock me-1"></i>
+                {{ event.start_date.strftime('%I:%M %p') }}
+                {% if event.end_date %}
+                - {{ event.end_date.strftime('%I:%M %p') }}
+                {% endif %}
+            </small>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+                Created {{ event.created_at.strftime('%b %d, %Y') }}
+            </small>
+            <div class="btn-group">
+                <a href="{{ url_for('events.view_event', event_id=event.id) }}"
+                   class="btn btn-sm btn-kuhes">
+                    View
+                </a>
+                {% if event.status == 'pending' or current_user.is_admin() %}
+                <button type="button" class="btn btn-sm btn-kuhes-outline dropdown-toggle dropdown-toggle-split"
+                        data-bs-toggle="dropdown">
+                    <span class="visually-hidden">Toggle Dropdown</span>
+                </button>
+                <ul class="dropdown-menu">
+                    {% if event.status == 'pending' %}
+                    <li>
+                        <a class="dropdown-item" href="#"
+                           onclick="editEvent({{ event.id }})">
+                            <i class="fas fa-edit me-2"></i> Edit
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li>
+                        <a class="dropdown-item text-danger" href="#"
+                           onclick="deleteEvent({{ event.id }})">
+                            <i class="fas fa-trash me-2"></i> Delete
+                        </a>
+                    </li>
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function editEvent(eventId) {
+        // You can implement edit functionality here
+        alert('Edit feature coming soon!');
+    }
+
+    function deleteEvent(eventId) {
+        if (confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
+            fetch(`/events/delete/${eventId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while deleting the event.');
+            });
+        }
+    }
+
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>

@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}My Events - KUHES Campus Connect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="row mb-5">
+        <div class="col-md-8">
+            <h1 class="display-5 fw-bold text-kuhes-primary mb-3">
+                <i class="fas fa-calendar-check me-3"></i>My Events
+            </h1>
+            <p class="lead text-muted">
+                Manage all events you have created
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('events.create_event') }}" class="btn btn-kuhes">
+                <i class="fas fa-plus-circle me-2"></i> Create New Event
+            </a>
+        </div>
+    </div>
+
+    <!-- Status Tabs -->
+    <div class="kuhes-card mb-4">
+        <div class="card-body">
+            <ul class="nav nav-pills nav-fill" id="eventsTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="all-tab" data-bs-toggle="tab"
+                            data-bs-target="#all" type="button" role="tab">
+                        <i class="fas fa-list me-2"></i> All Events
+                        <span class="badge bg-primary ms-2">{{ events|length }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="approved-tab" data-bs-toggle="tab"
+                            data-bs-target="#approved" type="button" role="tab">
+                        <i class="fas fa-check-circle me-2"></i> Approved
+                        <span class="badge bg-success ms-2">{{ events|selectattr('status', 'equalto', 'approved')|list|length }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="pending-tab" data-bs-toggle="tab"
+                            data-bs-target="#pending" type="button" role="tab">
+                        <i class="fas fa-clock me-2"></i> Pending
+                        <span class="badge bg-warning ms-2">{{ events|selectattr('status', 'equalto', 'pending')|list|length }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="rejected-tab" data-bs-toggle="tab"
+                            data-bs-target="#rejected" type="button" role="tab">
+                        <i class="fas fa-times-circle me-2"></i> Rejected
+                        <span class="badge bg-danger ms-2">{{ events|selectattr('status', 'equalto', 'rejected')|list|length }}</span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Events Content -->
+    <div class="tab-content" id="eventsTabContent">
+        <!-- All Events Tab -->
+        <div class="tab-pane fade show active" id="all" role="tabpanel">
+            {% if events %}
+            <div class="row">
+                {% for event in events %}
+                <div class="col-lg-6 mb-4">
+                    {% include 'events/_event_card.html' %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="kuhes-card text-center py-5">
+                <div class="card-body">
+                    <i class="fas fa-calendar-plus fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Events Created</h4>
+                    <p class="text-muted mb-4">You haven't created any events yet.</p>
+                    <a href="{{ url_for('events.create_event') }}" class="btn btn-kuhes">
+                        <i class="fas fa-plus-circle me-2"></i> Create Your First Event
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Approved Events Tab -->
+        <div class="tab-pane fade" id="approved" role="tabpanel">
+            {% set approved_events = events|selectattr('status', 'equalto', 'approved')|list %}
+            {% if approved_events %}
+            <div class="row">
+                {% for event in approved_events %}
+                <div class="col-lg-6 mb-4">
+                    {% include 'events/_event_card.html' %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="kuhes-card text-center py-5">
+                <div class="card-body">
+                    <i class="fas fa-check-circle fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Approved Events</h4>
+                    <p class="text-muted">You don't have any approved events yet.</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Pending Events Tab -->
+        <div class="tab-pane fade" id="pending" role="tabpanel">
+            {% set pending_events = events|selectattr('status', 'equalto', 'pending')|list %}
+            {% if pending_events %}
+            <div class="row">
+                {% for event in pending_events %}
+                <div class="col-lg-6 mb-4">
+                    {% include 'events/_event_card.html' %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="kuhes-card text-center py-5">
+                <div class="card-body">
+                    <i class="fas fa-clock fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Pending Events</h4>
+                    <p class="text-muted">You don't have any events pending approval.</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Rejected Events Tab -->
+        <div class="tab-pane fade" id="rejected" role="tabpanel">
+            {% set rejected_events = events|selectattr('status', 'equalto', 'rejected')|list %}
+            {% if rejected_events %}
+            <div class="row">
+                {% for event in rejected_events %}
+                <div class="col-lg-6 mb-4">
+                    {% include 'events/_event_card.html' %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="kuhes-card text-center py-5">
+                <div class="card-body">
+                    <i class="fas fa-times-circle fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Rejected Events</h4>
+                    <p class="text-muted">You don't have any rejected events.</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mt-5">
+        <div class="col-md-3 col-6 mb-4">
+            <div class="kuhes-card text-center py-4">
+                <h3 class="fw-bold text-kuhes-primary">{{ events|length }}</h3>
+                <p class="text-muted mb-0">Total Created</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-4">
+            <div class="kuhes-card text-center py-4">
+                <h3 class="fw-bold text-success">{{ events|selectattr('status', 'equalto', 'approved')|list|length }}</h3>
+                <p class="text-muted mb-0">Approved</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-4">
+            <div class="kuhes-card text-center py-4">
+                <h3 class="fw-bold text-warning">{{ events|selectattr('status', 'equalto', 'pending')|list|length }}</h3>
+                <p class="text-muted mb-0">Pending</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-4">
+            <div class="kuhes-card text-center py-4">
+                <h3 class="fw-bold text-danger">{{ events|selectattr('status', 'equalto', 'rejected')|list|length }}</h3>
+                <p class="text-muted mb-0">Rejected</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .nav-pills .nav-link {
+        color: var(--kuhes-dark);
+        padding: 12px 20px;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .nav-pills .nav-link:hover {
+        background-color: rgba(0, 86, 179, 0.1);
+    }
+
+    .nav-pills .nav-link.active {
+        background: linear-gradient(135deg, var(--kuhes-primary), var(--kuhes-secondary));
+        color: white;
+        box-shadow: 0 5px 15px rgba(0, 86, 179, 0.2);
+    }
+
+    .tab-pane {
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .kuhes-card {
+        transition: all 0.3s ease;
+    }
+
+    .kuhes-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 86, 179, 0.15);
+    }
+</style>
+{% endblock %}

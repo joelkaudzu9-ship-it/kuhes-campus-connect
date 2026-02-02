@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results - KUHES Campus Connect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="row mb-5">
+        <div class="col-md-8">
+            <h1 class="display-5 fw-bold text-primary mb-3">
+                <i class="fas fa-search me-3"></i>Search Results
+            </h1>
+            <p class="lead text-muted">
+                {% if query %}
+                Showing results for "{{ query }}"
+                {% else %}
+                Enter a search term to find discussions
+                {% endif %}
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('forum.forum_home') }}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i> Back to Forum
+            </a>
+        </div>
+    </div>
+
+    <!-- Search Box -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <form action="{{ url_for('forum.search') }}" method="GET" class="row g-3">
+                <div class="col-md-10">
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-primary text-white">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" name="q" class="form-control"
+                               placeholder="Search discussions, topics, or users..."
+                               value="{{ query }}" required>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <i class="fas fa-search me-2"></i> Search
+                    </button>
+                </div>
+            </form>
+
+            <!-- Search Filters -->
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="text-muted small">Filter by:</span>
+                        <a href="{{ url_for('forum.search', q=query, filter='all') }}"
+                           class="badge bg-primary text-decoration-none">All</a>
+                        <a href="{{ url_for('forum.search', q=query, filter='posts') }}"
+                           class="badge bg-secondary text-decoration-none">Posts</a>
+                        <a href="{{ url_for('forum.search', q=query, filter='comments') }}"
+                           class="badge bg-secondary text-decoration-none">Comments</a>
+                        <a href="{{ url_for('forum.search', q=query, filter='users') }}"
+                           class="badge bg-secondary text-decoration-none">Users</a>
+                        <a href="{{ url_for('forum.search', q=query, filter='events') }}"
+                           class="badge bg-secondary text-decoration-none">Events</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold">
+                    <i class="fas fa-list me-2"></i> Results
+                    <span class="badge bg-primary ms-2">{{ posts.total if posts else 0 }}</span>
+                </h5>
+                <div class="text-muted small">
+                    {% if posts %}
+                    Page {{ posts.page }} of {{ posts.pages }}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+            {% if posts and posts.items %}
+                {% for post in posts.items %}
+                <div class="search-result p-4 border-bottom">
+                    <div class="row">
+                        <div class="col-md-10">
+                            <h5 class="mb-2">
+                                <a href="{{ url_for('main.view_post', post_id=post.id) }}"
+                                   class="text-decoration-none text-dark fw-bold">
+                                    {{ post.title }}
+                                </a>
+                            </h5>
+                            <p class="text-muted small mb-2">
+                                <i class="fas fa-user me-1"></i>
+                                <a href="{{ url_for('main.view_profile', username=post.author.username) }}"
+                                   class="text-decoration-none">
+                                    {{ post.author.get_full_name() }}
+                                </a>
+                                <i class="fas fa-clock mx-2"></i> {{ post.created_at.strftime('%b %d, %Y') }}
+                                <i class="fas fa-tag mx-2"></i>
+                                <span class="badge bg-secondary">{{ post.category|title }}</span>
+                            </p>
+                            <p class="mb-0">
+                                {% set content = post.content %}
+                                {% if query.lower() in content.lower() %}
+                                    {% set start = content.lower().find(query.lower()) %}
+                                    {% set snippet_start = max(0, start - 50) %}
+                                    {% set snippet_end = min(len(content), start + len(query) + 100) %}
+                                    ...{{ content[snippet_start:snippet_end] }}...
+                                {% else %}
+                                    {{ post.content[:200] }}{% if post.content|length > 200 %}...{% endif %}
+                                {% endif %}
+                            </p>
+                            <div class="mt-2">
+                                <span class="badge bg-light text-dark me-2">
+                                    <i class="fas fa-comment me-1"></i> {{ post.comments|length }} comments
+                                </span>
+                                <span class="badge bg-light text-dark">
+                                    <i class="fas fa-heart me-1"></i> {{ post.reactions|length }} reactions
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <a href="{{ url_for('main.view_post', post_id=post.id) }}"
+                               class="btn btn-outline-primary">
+                                View <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% elif query %}
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">No results found</h4>
+                    <p class="text-muted mb-4">
+                        No discussions found matching "{{ query }}"
+                    </p>
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{{ url_for('forum.forum_home') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-home me-2"></i> Browse All Discussions
+                        </a>
+                        {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('main.create_post') }}" class="btn btn-primary">
+                            <i class="fas fa-plus-circle me-2"></i> Start New Discussion
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">Enter a search term</h4>
+                    <p class="text-muted mb-4">
+                        Use the search box above to find discussions, users, or topics
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Pagination -->
+        {% if posts and posts.pages > 1 %}
+        <div class="card-footer bg-light">
+            <nav aria-label="Search results pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if posts.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('forum.search', q=query, page=posts.prev_num) }}">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for page_num in posts.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                        {% if page_num %}
+                            {% if page_num == posts.page %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('forum.search', q=query, page=page_num) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if posts.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('forum.search', q=query, page=posts.next_num) }}">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Search Tips -->
+    <div class="card mt-4 shadow-sm">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i> Search Tips</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Better Search Results:</h6>
+                    <ul class="mb-0">
+                        <li>Use specific keywords instead of general terms</li>
+                        <li>Try different variations of your search terms</li>
+                        <li>Use quotes for exact phrase matching</li>
+                        <li>Filter by category using the badges above</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>What You Can Search:</h6>
+                    <ul class="mb-0">
+                        <li><strong>Course codes</strong> - e.g., "MED201", "PHA301"</li>
+                        <li><strong>Faculty names</strong> - e.g., "Dr. Smith", "Prof. Johnson"</li>
+                        <li><strong>Event names</strong> - e.g., "symposium", "workshop"</li>
+                        <li><strong>Study topics</strong> - e.g., "biochemistry", "pharmacology"</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .search-result {
+        transition: all 0.3s ease;
+    }
+
+    .search-result:hover {
+        background-color: #f8f9fa;
+    }
+
+    .search-result h5 a {
+        color: #0056b3;
+    }
+
+    .search-result h5 a:hover {
+        text-decoration: underline;
+    }
+
+    .page-link {
+        color: #0056b3;
+        border-color: #dee2e6;
+    }
+
+    .page-link:hover {
+        color: #004494;
+        background-color: #e9ecef;
+        border-color: #dee2e6;
+    }
+
+    .page-item.active .page-link {
+        background-color: #0056b3;
+        border-color: #0056b3;
+    }
+
+    .badge.bg-light {
+        border: 1px solid #dee2e6;
+    }
+</style>
+{% endblock %}
