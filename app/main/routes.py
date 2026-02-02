@@ -408,3 +408,30 @@ def view_profile(username):
                            profile_user=user,
                            posts=user_posts,
                            user=current_user)
+@app.route('/reset-db')
+def reset_database():
+    '''TEMPORARY ROUTE - Remove after use!'''
+    from app import db
+    from app.models import User
+    
+    try:
+        # Drop all tables
+        db.drop_all()
+        
+        # Recreate tables
+        db.create_all()
+        
+        # Create admin user
+        admin = User(
+            username='admin',
+            email='admin@kuhes.edu',
+            role='admin'
+        )
+        admin.set_password('admin123')
+        db.session.add(admin)
+        db.session.commit()
+        
+        return '? Database reset successfully! Admin created: admin@kuhes.edu / admin123'
+    except Exception as e:
+        return f'? Error: {str(e)}'
+
